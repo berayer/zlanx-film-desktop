@@ -1,0 +1,19 @@
+{
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "cSpell.words": [
+    "stylesheet",
+    "tanstack",
+    "workbuddy",
+    "zlanx"
+  ],
+  "js/ts.experimental.useTsgo": false,
+  "editor.defaultFormatter": "oxc.oxc-vscode"
+}
