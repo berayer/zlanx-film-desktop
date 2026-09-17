@@ -6,3 +6,4 @@ out
 plugins/
 .tanstack/
 .workbuddy/
+plugin-src/

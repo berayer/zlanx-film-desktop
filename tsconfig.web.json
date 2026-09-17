@@ -1,6 +1,11 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
-  "include": ["src/renderer/src/env.d.ts", "src/renderer/src/**/*", "src/renderer/src/**/*.tsx", "src/shared/**/*"],
+  "include": [
+    "src/renderer/src/env.d.ts",
+    "src/renderer/src/**/*",
+    "src/renderer/src/**/*.tsx",
+    "src/shared/**/*"
+  ],
   "compilerOptions": {
     "composite": true,
     "jsx": "react-jsx",
@@ -8,7 +13,8 @@
       "@/*": ["./src/renderer/src/*"],
       "@main/*": ["./src/main/*"],
       "@preload/*": ["./src/preload/*"],
-      "@shared/*": ["./src/shared/*"]
+      "@shared/*": ["./src/shared/*"],
+      "@generated/*": ["./generated/*"]
     },
     "types": ["vite/client"]
   }

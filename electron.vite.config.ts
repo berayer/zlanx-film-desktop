@@ -11,6 +11,7 @@ const alias = {
   "@main": resolve("src/main/"),
   "@preload": resolve("src/preload"),
   "@shared": resolve("src/shared"),
+  "@generated": resolve("generated"),
 }
 
 /** 打进主进程包体的依赖：插件可通过 require 拿到（与 src/main/plugin/modules.ts 保持一致） */

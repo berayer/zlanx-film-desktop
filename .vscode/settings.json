@@ -9,11 +9,15 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "cSpell.words": [
+    "autoincrement",
     "stylesheet",
     "tanstack",
     "workbuddy",
     "zlanx"
   ],
   "js/ts.experimental.useTsgo": false,
-  "editor.defaultFormatter": "oxc.oxc-vscode"
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  }
 }

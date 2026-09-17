@@ -4,6 +4,8 @@ import { electronApp, optimizer, is } from "@electron-toolkit/utils"
 import icon from "../../resources/icon.png?asset"
 import { hostLog } from "@main/logger"
 import { initPluginManager, registerPluginIpc } from "@main/plugin/index"
+import { registerApi } from "@main/api"
+import { prisma } from "@main/lib/db"
 
 /** 应用级日志器（作用域 `app`，底层 electron-log） */
 const log = hostLog.scope("app")
@@ -60,6 +62,7 @@ app.whenReady().then(async () => {
   /** 加载所有插件：initPluginManager 内部已经完成扫描与加载，这里不再重复 init */
   const plugins = await initPluginManager()
   registerPluginIpc(plugins)
+  registerApi()
 
   createWindow()
 
@@ -81,6 +84,13 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit()
   }
+})
+
+// 退出前断开 SQLite 连接，避免连接残留时数据文件被占用
+app.on("before-quit", () => {
+  void prisma.$disconnect().catch((error: unknown) => {
+    log.warn(`关闭数据库连接失败：${error instanceof Error ? error.message : String(error)}`)
+  })
 })
 
 // In this file you can include the rest of your app's specific main process

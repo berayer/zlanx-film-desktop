@@ -16,13 +16,19 @@ import {
 } from "@/components/ui/dialog"
 import { PluginCard } from "@/components/custom/plugin-card"
 import { PluginConfigDialog } from "@/components/custom/plugin-config-dialog"
-import type { PluginConfigSnapshot, PluginConfigValue, PluginInfo } from "@shared/ipc"
-import { FolderOpenIcon, LinkIcon, LoaderCircleIcon, PackageOpenIcon, RefreshCwIcon } from "lucide-react"
+import type { PluginConfigSnapshot, PluginConfigValue, PluginInfo, PluginInstallResult } from "@shared/ipc"
+import { FileCodeIcon, LinkIcon, LoaderCircleIcon, PackageOpenIcon, RefreshCwIcon } from "lucide-react"
 
 interface Toast {
   id: number
   type: "success" | "error"
   message: string
+}
+
+/** 取路径最后一段（Windows 与 Unix 分隔符都兼容），用于提示「哪个文件安装失败」 */
+function fileBaseName(filePath: string): string {
+  const segments = filePath.split(/[\\/]/)
+  return segments[segments.length - 1] || filePath
 }
 
 export const Route = createFileRoute("/plugin")({
@@ -126,17 +132,35 @@ function RouteComponent() {
     setUrl("")
   }
 
+  /** 本地安装：弹出文件选择框（可多选 .js），逐个安装并分别汇报成功 / 失败 */
   const installFromDialog = async () => {
-    let installed: PluginInfo | undefined
+    setWorking(true)
+    let results: PluginInstallResult[] = []
     try {
-      installed = await window.electron.plugins.installFromDialog()
+      results = await window.electron.plugins.installFromDialog()
     } catch (error) {
       pushToast("error", error instanceof Error ? error.message : String(error))
+    } finally {
+      setWorking(false)
+    }
+    // 用户取消选择
+    if (results.length === 0) {
+      return
+    }
+    const installed = results.flatMap((item) => (item.plugin ? [item.plugin] : []))
+    const failed = results.flatMap((item) => (item.error ? [{ source: item.source, error: item.error }] : []))
+    if (installed.length > 0) {
+      pushToast(
+        "success",
+        installed.length === 1
+          ? `已安装：${installed[0].manifest.name}`
+          : `已安装 ${installed.length} 个插件：${installed.map((item) => item.manifest.name).join("、")}`,
+      )
+    }
+    for (const item of failed) {
+      pushToast("error", `${fileBaseName(item.source)} 安装失败：${item.error}`)
     }
     await refresh()
-    if (installed) {
-      pushToast("success", `已安装：${installed.manifest.name}`)
-    }
   }
 
   const toggle = (info: PluginInfo, next: boolean) => {
@@ -267,8 +291,13 @@ function RouteComponent() {
             <LinkIcon />
             网络安装
           </Button>
-          <Button variant="outline" disabled={working} onClick={() => void installFromDialog()}>
-            <FolderOpenIcon />
+          <Button
+            variant="outline"
+            disabled={working}
+            title="选择一个或多个本地 .js 插件文件"
+            onClick={() => void installFromDialog()}
+          >
+            <FileCodeIcon />
             本地安装
           </Button>
           <Input

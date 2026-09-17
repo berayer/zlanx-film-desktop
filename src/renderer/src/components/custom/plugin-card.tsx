@@ -54,7 +54,7 @@ export function PluginCard({ info, busy, onToggle, onReload, onUninstall, onConf
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-2 h-full">
+      <CardContent className="h-full space-y-2">
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <dt>ID</dt>
           <dd className="truncate font-mono text-foreground/80">{manifest.id}</dd>

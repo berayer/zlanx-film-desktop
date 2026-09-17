@@ -9,21 +9,35 @@ import type { PluginCallOptions } from "@main/plugin/interface"
  */
 
 /** 搜索结果条目 */
-export interface SourceSearchItem {
+export interface Film {
   /** 站内唯一 ID，用于后续取详情 / 播放地址 */
   id: string
-  /** 标题 */
+  /** 影片名称 */
   title: string
-  /** 封面图地址 */
-  cover?: string
-  /** 备注（更新状态、评分等） */
-  remark?: string
+  /** 影片海报 */
+  poster?: string
+  /** 影片年份 */
+  year?: string
+  /** 影片地区 */
+  region?: string
+  /** 影片类型 */
+  genres?: string[]
+  /** 影片描述 */
+  description?: string
+  /** 影片评分 */
+  rating?: number
+  /** 最新状态 */
+  latest?: string
+  /** 最新更新日期 */
+  latestDate?: string
+  /** 影片源， 可以有多个，每个有多集 */
+  sources?: Array<FilmSourceEpisode[]>
   /** 允许源自行扩展字段 */
   [key: string]: unknown
 }
 
 /** 详情 / 剧集 */
-export interface SourceEpisode {
+export interface FilmSourceEpisode {
   /** 剧集 ID，用于取播放地址 */
   id: string
   title: string
@@ -31,18 +45,12 @@ export interface SourceEpisode {
   url?: string
 }
 
-/** 影片详情 */
-export interface SourceDetail extends SourceSearchItem {
-  description?: string
-  episodes?: SourceEpisode[]
-}
-
 /** 影视源插件可以实现的方法 */
 export interface SourceApi {
   /** 按关键字搜索 */
-  search(keyword: string, options?: PluginCallOptions): Promise<SourceSearchItem[]>
+  search(keyword: string, options?: PluginCallOptions): Promise<Film[]>
   /** 取影片详情（含剧集列表） */
-  getDetail(id: string, options?: PluginCallOptions): Promise<SourceDetail | undefined>
+  getDetail(id: string, options?: PluginCallOptions): Promise<Film | undefined>
   /** 取播放地址 */
   getPlayUrl(id: string, options?: PluginCallOptions): Promise<string | undefined>
 }

@@ -18,7 +18,7 @@ function MediaCard({ item }: { item: MediaInfo }) {
   return (
     <Link
       to="/player"
-      search={{ url: item.url, plugin: item.pluginId }}
+      search={{ id: item.id, plugin: item.pluginId }}
       title={item.name}
       className="group block focus:outline-none"
     >

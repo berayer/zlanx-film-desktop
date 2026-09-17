@@ -6,7 +6,7 @@ import { PluginError } from "./errors"
 import { PluginManager } from "./manager"
 import { HOST_MODULE_NAMES, HOST_MODULES } from "./modules"
 import type { PluginConfigSnapshot, PluginConfigUpdateOptions, PluginConfigValue, PluginInfo } from "./interface"
-import { PLUGIN_IPC, type IpcEnvelope } from "@shared/ipc"
+import { PLUGIN_IPC, type IpcEnvelope, type PluginInstallResult } from "@shared/ipc"
 import type { SourceApi } from "@shared/plugin-api"
 
 let manager: PluginManager<SourceApi> | undefined
@@ -73,6 +73,29 @@ function envelope<T>(task: () => Promise<T>): Promise<IpcEnvelope<T>> {
       }
     },
   )
+}
+
+/**
+ * 按顺序安装多个本地插件文件（多选安装时逐个执行）。
+ *
+ * 单个文件失败不中断整批：失败原因按文件回填到结果里，
+ * 这样界面可以「成功的提示成功、失败的提示失败」而不是整批回滚。
+ */
+async function installFiles(
+  pluginManager: PluginManager<SourceApi>,
+  files: readonly string[],
+): Promise<PluginInstallResult[]> {
+  const results: PluginInstallResult[] = []
+  for (const file of files) {
+    try {
+      results.push({ source: file, plugin: await pluginManager.installFile(file) })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      log.warn(`安装失败（${file}）：${message}`)
+      results.push({ source: file, error: message })
+    }
+  }
+  return results
 }
 
 function assertId(id: unknown): asserts id is string {
@@ -151,21 +174,19 @@ export function registerPluginIpc(pluginManager: PluginManager<SourceApi>): void
   )
 
   ipcMain.handle(PLUGIN_IPC.installFromDialog, (_event) =>
-    envelope(async (): Promise<PluginInfo | undefined> => {
+    envelope(async (): Promise<PluginInstallResult[]> => {
       const result = await dialog.showOpenDialog({
-        title: "选择插件文件（.js）",
-        properties: ["openFile", "openDirectory"],
+        title: "选择插件文件（.js，可多选）",
+        properties: ["openFile", "multiSelections"],
         filters: [
-          { name: "插件脚本", extensions: ["js"] },
+          { name: "插件脚本", extensions: ["js", "cjs"] },
           { name: "全部文件", extensions: ["*"] },
         ],
       })
       if (result.canceled || result.filePaths.length === 0) {
-        return undefined
+        return []
       }
-      const selected = result.filePaths[0]
-      // 目录会被解析为其下的 index.js，等价于安装一个已解压的插件
-      return pluginManager.install(selected)
+      return installFiles(pluginManager, result.filePaths)
     }),
   )
 

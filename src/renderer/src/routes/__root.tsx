@@ -5,6 +5,7 @@ import { WindowController } from "@/components/custom/window-controller"
 import { Separator } from "@/components/ui/separator"
 import { RotateCcwClockIcon, MonitorPlayIcon } from "lucide-react"
 import { FilmSearchInput } from "@/components/custom/film-search-input"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 const RootLayout = () => (
   <>
@@ -32,9 +33,9 @@ const RootLayout = () => (
           <WindowController />
         </div>
       </div>
-      <div className="flex-1 overflow-auto contain-size">
+      <ScrollArea className="flex-1 overflow-auto contain-size">
         <Outlet />
-      </div>
+      </ScrollArea>
     </div>
 
     <TanStackRouterDevtools />

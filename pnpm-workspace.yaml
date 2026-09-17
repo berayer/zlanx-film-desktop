@@ -1,4 +1,9 @@
 allowBuilds:
+  '@prisma/engines': true
+  better-sqlite3: true
   electron: true
   electron-winstaller: true
   esbuild: true
+  msgpackr-extract: true
+  prisma: true
+  workerd: true

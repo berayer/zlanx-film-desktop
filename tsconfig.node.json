@@ -1,14 +1,22 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
-  "include": ["electron.vite.config.*", "src/main/**/*", "src/preload/**/*", "src/shared/**/*"],
+  "include": [
+    "electron.vite.config.*",
+    "src/main/**/*",
+    "src/preload/**/*",
+    "src/shared/**/*",
+    "prisma.config.ts",
+    "generated/prisma"
+  ],
   "compilerOptions": {
     "composite": true,
-    "types": ["electron-vite/node"],
+    "types": ["electron-vite/node", "node"],
     "paths": {
       "@/*": ["./src/renderer/src/*"],
       "@main/*": ["./src/main/*"],
       "@preload/*": ["./src/preload/*"],
-      "@shared/*": ["./src/shared/*"]
+      "@shared/*": ["./src/shared/*"],
+      "@generated/*": ["./generated/*"]
     }
   }
 }

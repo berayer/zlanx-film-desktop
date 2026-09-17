@@ -9,12 +9,26 @@ import type {
   PluginConfigValue,
   PluginInfo,
 } from "@main/plugin/interface"
-import type { SourceApi, SourceDetail, SourceEpisode, SourceSearchItem } from "./plugin-api"
+import type { SourceApi } from "./plugin-api"
 
 export type { PluginCallOptions, PluginInfo }
 export type { ApiArgs, ApiMethodKey, ApiResult }
 export type { PluginConfigField, PluginConfigSnapshot, PluginConfigUpdateOptions, PluginConfigValue }
-export type { SourceApi, SourceSearchItem, SourceDetail, SourceEpisode }
+
+/**
+ * 单个安装任务的结果（批量安装时使用）。
+ *
+ * 本地多选安装可能出现「部分成功」，因此不抛异常中断整批，
+ * 而是把每一项的成功 / 失败原因都带回来由界面分别呈现。
+ */
+export interface PluginInstallResult {
+  /** 安装来源：本地文件路径或下载地址 */
+  source: string
+  /** 安装成功的插件信息（失败时为空） */
+  plugin?: PluginInfo
+  /** 失败原因（成功时为空） */
+  error?: string
+}
 
 /**
  * 插件相关的 IPC 通道名，main 与 preload 共用，避免两端手写字符串不一致。
@@ -74,8 +88,13 @@ export interface PluginsApi<TApi extends object = SourceApi> {
    * 通过后落盘并立即启用；任一项不满足则返回安装失败。仅支持 http(s)。
    */
   installFromUrl(url: string): Promise<PluginInfo>
-  /** 弹出系统选择框，从本地 js 文件（或含 index.js 的目录）安装插件；用户取消时返回 undefined */
-  installFromDialog(): Promise<PluginInfo | undefined>
+  /**
+   * 弹出系统文件选择框，从本地 js 文件安装插件（支持多选）。
+   *
+   * 按顺序逐个安装，单个文件失败不影响其它文件：
+   * 返回与选中文件一一对应的结果数组；用户取消时返回空数组。
+   */
+  installFromDialog(): Promise<PluginInstallResult[]>
   /** 卸载并删除插件（默认连数据一起删除） */
   uninstall(id: string): Promise<void>
   /** 读取插件配置：声明的配置项 schema + 当前值（后者已合并 schema 默认值） */

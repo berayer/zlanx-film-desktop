@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// 收藏的影片：plugin + filmId 唯一（同一部片在同一个影视源里只会收藏一次）
+model FavoritesFilm {
+  id         Int      @id @default(autoincrement())
+  plugin     String
+  pluginName String   @map("plugin_name")
+  filmId     String   @map("film_id")
+  filmTitle  String   @map("film_title")
+  filmPoster String?  @map("film_poster")
+  /// 年份 / 地区 / 最新状态 / 简介：收藏页与播放页展示用，影视源没给就是 null
+  filmYear   String?  @map("film_year")
+  filmRegion String?  @map("film_region")
+  filmLatest String?  @map("film_latest")
+  filmDesc   String?  @map("film_desc")
+  /// 收藏时间，列表按它倒序
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([plugin, filmId])
+  @@index([createdAt])
+}

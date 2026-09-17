@@ -9,9 +9,11 @@ import type {
   PluginConfigSnapshot,
   PluginsApi,
   PluginInfo,
-  SourceApi,
+  PluginInstallResult,
 } from "@shared/ipc"
 import { PLUGIN_IPC } from "@shared/ipc"
+import { SourceApi } from "@shared/plugin-api"
+import { DB_API_IPC, type DB_API, type FavoriteFilm, type FavoriteFilmInput } from "@shared/db-api"
 
 /** 统一包装 IPC 返回结果*/
 function unwrap<T>(envelope: IpcEnvelope<T>): T {
@@ -41,12 +43,23 @@ const plugins: PluginsApi<SourceApi> = {
   install: (source) => ipcRenderer.invoke(PLUGIN_IPC.install, source).then((e) => unwrap<PluginInfo>(e)),
   installFromUrl: (url) => ipcRenderer.invoke(PLUGIN_IPC.installFromUrl, url).then((e) => unwrap<PluginInfo>(e)),
   installFromDialog: () =>
-    ipcRenderer.invoke(PLUGIN_IPC.installFromDialog).then((e) => unwrap<PluginInfo | undefined>(e)),
+    ipcRenderer.invoke(PLUGIN_IPC.installFromDialog).then((e) => unwrap<PluginInstallResult[]>(e)),
   uninstall: (id) => ipcRenderer.invoke(PLUGIN_IPC.uninstall, id).then((e) => unwrap<void>(e)),
   getConfig: (id) => ipcRenderer.invoke(PLUGIN_IPC.getConfig, id).then((e) => unwrap<PluginConfigSnapshot>(e)),
   updateConfig: (id, patch, options) =>
     ipcRenderer.invoke(PLUGIN_IPC.updateConfig, id, patch, options).then((e) => unwrap<PluginInfo>(e)),
   resetConfig: (id) => ipcRenderer.invoke(PLUGIN_IPC.resetConfig, id).then((e) => unwrap<PluginInfo>(e)),
+}
+
+/** 收藏相关的 IPC 通信（返回值已是 DTO，直接透传即可） */
+const api: DB_API = {
+  getFavoritesFilms: () => ipcRenderer.invoke(DB_API_IPC.getFavoritesFilms).then((rows) => rows as FavoriteFilm[]),
+  addFavoritesFilm: (film: FavoriteFilmInput) =>
+    ipcRenderer.invoke(DB_API_IPC.addFavoritesFilm, film).then((row) => row as FavoriteFilm),
+  removeFavoritesFilm: (plugin: string, filmId: string) =>
+    ipcRenderer.invoke(DB_API_IPC.removeFavoritesFilm, plugin, filmId).then((removed) => removed as boolean),
+  isFavoritesFilm: (plugin: string, filmId: string) =>
+    ipcRenderer.invoke(DB_API_IPC.isFavoritesFilm, plugin, filmId).then((favorited) => favorited as boolean),
 }
 
 const electronAPI: ElectronAPI = {
@@ -58,6 +71,7 @@ const electronAPI: ElectronAPI = {
     close: () => ipcRenderer.send("win:invoke", "close"),
   },
   plugins,
+  api,
 }
 
 if (process.contextIsolated) {
