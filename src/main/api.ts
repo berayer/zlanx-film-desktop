@@ -1,12 +1,18 @@
 import { ipcMain } from "electron"
 import { hostLog } from "./logger"
 import { prisma } from "./lib/db"
-import { DB_API_IPC, type FavoriteFilm, type FavoriteFilmInput } from "@shared/db-api"
+import {
+  DB_API_IPC,
+  type FavoriteFilm,
+  type FavoriteFilmInput,
+  type WatchHistoryEntry,
+  type WatchProgressInput,
+} from "@shared/db-api"
 
 /** 收藏相关日志（作用域 `db`，底层 electron-log） */
 const log = hostLog.scope("db")
 
-/** Prisma 行 → IPC DTO：日期转成 ISO 字符串，字段顺序与 DTO 对齐 */
+/** Prisma 行 → IPC DTO：日期转成 ISO 字符串 */
 function toFavoriteFilm(row: {
   id: number
   plugin: string
@@ -14,10 +20,6 @@ function toFavoriteFilm(row: {
   filmId: string
   filmTitle: string
   filmPoster: string | null
-  filmYear: string | null
-  filmRegion: string | null
-  filmLatest: string | null
-  filmDesc: string | null
   createdAt: Date
   updatedAt: Date
 }): FavoriteFilm {
@@ -28,10 +30,6 @@ function toFavoriteFilm(row: {
     filmId: row.filmId,
     filmTitle: row.filmTitle,
     filmPoster: row.filmPoster,
-    filmYear: row.filmYear,
-    filmRegion: row.filmRegion,
-    filmLatest: row.filmLatest,
-    filmDesc: row.filmDesc,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
@@ -45,15 +43,50 @@ function toCreateData(film: FavoriteFilmInput) {
     filmId: film.filmId,
     filmTitle: film.filmTitle,
     filmPoster: film.filmPoster?.trim() || null,
-    filmYear: film.filmYear?.trim() || null,
-    filmRegion: film.filmRegion?.trim() || null,
-    filmLatest: film.filmLatest?.trim() || null,
-    filmDesc: film.filmDesc?.trim() || null,
   }
 }
 
+/** Prisma 行 → 播放历史 DTO */
+function toWatchHistoryEntry(row: {
+  id: number
+  plugin: string
+  pluginName: string
+  filmId: string
+  filmTitle: string
+  filmPoster: string | null
+  episodeId: string
+  episodeTitle: string
+  position: number
+  duration: number
+  createdAt: Date
+  updatedAt: Date
+}): WatchHistoryEntry {
+  return {
+    id: row.id,
+    plugin: row.plugin,
+    pluginName: row.pluginName,
+    filmId: row.filmId,
+    filmTitle: row.filmTitle,
+    filmPoster: row.filmPoster,
+    episodeId: row.episodeId,
+    episodeTitle: row.episodeTitle,
+    position: row.position,
+    duration: row.duration,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  }
+}
+
+/** 秒数合法性兜底：NaN / 负数 / Infinity 一律归零，避免脏数据写进库 */
+function normalizeSeconds(value: number): number {
+  if (!Number.isFinite(value) || value < 0) {
+    return 0
+  }
+  return Math.round(value * 1000) / 1000
+}
+
 /**
- * 注册收藏相关的 IPC handler。
+ * 注册收藏 / 播放历史相关的 IPC handler。
  *
  * 通道名见 `@shared/db-api` 的 `DB_API_IPC`；
  * 由 `src/main/index.ts` 在 `app.whenReady` 里调用一次。
@@ -90,5 +123,72 @@ export const registerApi = (): void => {
   ipcMain.handle(DB_API_IPC.isFavoritesFilm, async (_event, plugin: string, filmId: string): Promise<boolean> => {
     const count = await prisma.favoritesFilm.count({ where: { plugin, filmId } })
     return count > 0
+  })
+
+  /* ---------------------------- 播放历史 ---------------------------- */
+
+  // 历史列表（最近看的排前面）
+  ipcMain.handle(DB_API_IPC.getWatchHistory, async (_event, limit?: number): Promise<WatchHistoryEntry[]> => {
+    const rows = await prisma.watchHistory.findMany({
+      orderBy: { updatedAt: "desc" },
+      take: typeof limit === "number" && limit > 0 ? Math.floor(limit) : undefined,
+    })
+    return rows.map(toWatchHistoryEntry)
+  })
+
+  // 单部片的观看记录（播放页标记已看过的集数）
+  ipcMain.handle(
+    DB_API_IPC.getFilmWatchHistory,
+    async (_event, plugin: string, filmId: string): Promise<WatchHistoryEntry[]> => {
+      const rows = await prisma.watchHistory.findMany({ where: { plugin, filmId }, orderBy: { updatedAt: "desc" } })
+      return rows.map(toWatchHistoryEntry)
+    },
+  )
+
+  // 上报进度：影视源 + 影片 + 剧集 唯一，重复观看会覆盖同一条记录
+  ipcMain.handle(
+    DB_API_IPC.saveWatchProgress,
+    async (_event, entry: WatchProgressInput): Promise<WatchHistoryEntry> => {
+      const data = {
+        plugin: entry.plugin,
+        pluginName: entry.pluginName,
+        filmId: entry.filmId,
+        filmTitle: entry.filmTitle,
+        filmPoster: entry.filmPoster?.trim() || null,
+        episodeId: entry.episodeId,
+        episodeTitle: entry.episodeTitle,
+        position: normalizeSeconds(entry.position),
+        duration: normalizeSeconds(entry.duration),
+      }
+      const row = await prisma.watchHistory.upsert({
+        where: { plugin_filmId_episodeId: { plugin: data.plugin, filmId: data.filmId, episodeId: data.episodeId } },
+        create: data,
+        update: data,
+      })
+      return toWatchHistoryEntry(row)
+    },
+  )
+
+  // 删除历史：给了 entryId 只删这一集，否则整部片一起删
+  ipcMain.handle(
+    DB_API_IPC.removeWatchHistory,
+    async (_event, plugin: string, filmId: string, entryId?: number): Promise<number> => {
+      const result = await prisma.watchHistory.deleteMany({
+        where: { plugin, filmId, id: entryId },
+      })
+      if (result.count > 0) {
+        log.info(`已删除播放历史：${plugin} / ${filmId}${entryId === undefined ? "" : ` / ${entryId}`}`)
+      }
+      return result.count
+    },
+  )
+
+  // 清空历史
+  ipcMain.handle(DB_API_IPC.clearWatchHistory, async (): Promise<number> => {
+    const result = await prisma.watchHistory.deleteMany()
+    if (result.count > 0) {
+      log.info(`已清空播放历史（${result.count} 条）`)
+    }
+    return result.count
   })
 }

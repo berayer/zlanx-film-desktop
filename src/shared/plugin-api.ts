@@ -8,6 +8,14 @@ import type { PluginCallOptions } from "@main/plugin/interface"
  * 要新增 / 修改可调用的方法，只需改这里——插件管理器本身不含任何业务概念。
  */
 
+/**
+ * 影片标签：`[属性, 取值]`，例如 `["年份：", "2026"]`。
+ *
+ * 影视源给的字段各不相同，用这种二元组可以在不改 schema 的前提下渲染任意信息；
+ * 宿主会把它渲染在详情区，并随收藏一起入库。
+ */
+export type FilmTag = [label: string, value: string]
+
 /** 搜索结果条目 */
 export interface Film {
   /** 站内唯一 ID，用于后续取详情 / 播放地址 */
@@ -32,6 +40,8 @@ export interface Film {
   latestDate?: string
   /** 影片源， 可以有多个，每个有多集 */
   sources?: Array<FilmSourceEpisode[]>
+  /** 影片标签，宿主原样按数组顺序渲染（顺序与内容都由影视源决定） */
+  tags?: FilmTag[]
   /** 允许源自行扩展字段 */
   [key: string]: unknown
 }

@@ -42,6 +42,7 @@
     "he": "^1.2.0",
     "install": "^0.13.0",
     "lucide-react": "^1.45.0",
+    "media-chrome": "^4.19.2",
     "react-player": "^3.4.0",
     "shadcn": "^4.21.0",
     "tailwindcss": "^4.3.3",
@@ -65,6 +66,7 @@
     "prisma": "7.10.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "vite": "^7.2.6"
   }

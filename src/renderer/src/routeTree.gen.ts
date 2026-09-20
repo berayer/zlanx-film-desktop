@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PlayerRouteImport } from './routes/player'
 import { Route as PluginRouteImport } from './routes/plugin'
 import { Route as SearchRouteImport } from './routes/search'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlayerRoute = PlayerRouteImport.update({
@@ -44,6 +50,7 @@ const SearchRoute = SearchRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/history': typeof HistoryRoute
   '/player': typeof PlayerRoute
   '/plugin': typeof PluginRoute
   '/search': typeof SearchRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/history': typeof HistoryRoute
   '/player': typeof PlayerRoute
   '/plugin': typeof PluginRoute
   '/search': typeof SearchRoute
@@ -59,21 +67,24 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/history': typeof HistoryRoute
   '/player': typeof PlayerRoute
   '/plugin': typeof PluginRoute
   '/search': typeof SearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/player' | '/plugin' | '/search'
+  fullPaths: '/' | '/about' | '/history' | '/player' | '/plugin' | '/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/player' | '/plugin' | '/search'
-  id: '__root__' | '/' | '/about' | '/player' | '/plugin' | '/search'
+  to: '/' | '/about' | '/history' | '/player' | '/plugin' | '/search'
+  id:
+    '__root__' | '/' | '/about' | '/history' | '/player' | '/plugin' | '/search'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  HistoryRoute: typeof HistoryRoute
   PlayerRoute: typeof PlayerRoute
   PluginRoute: typeof PluginRoute
   SearchRoute: typeof SearchRoute
@@ -93,6 +104,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/player': {
@@ -122,6 +140,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  HistoryRoute: HistoryRoute,
   PlayerRoute: PlayerRoute,
   PluginRoute: PluginRoute,
   SearchRoute: SearchRoute,

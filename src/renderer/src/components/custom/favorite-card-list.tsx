@@ -34,8 +34,6 @@ function FavoriteCard({
   busy: boolean
   onRemove: (item: FavoriteFilm) => void
 }) {
-  const meta = [item.filmYear, item.filmRegion].filter(Boolean).join(" · ")
-
   return (
     <div className="group relative">
       <Link
@@ -60,11 +58,6 @@ function FavoriteCard({
               className="absolute inset-0 size-full object-cover transition duration-300 group-hover:scale-105"
             />
           )}
-          {item.filmLatest && (
-            <span className="absolute top-1 right-1 max-w-[70%] truncate rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
-              {item.filmLatest}
-            </span>
-          )}
           <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
             {item.pluginName}
           </span>
@@ -76,7 +69,6 @@ function FavoriteCard({
         >
           {item.filmTitle}
         </p>
-        {meta.length > 0 && <p className="truncate text-xs text-muted-foreground">{meta}</p>}
       </Link>
 
       <Button

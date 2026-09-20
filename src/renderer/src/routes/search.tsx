@@ -1,12 +1,13 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router"
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { LoaderCircleIcon, PackageOpenIcon, RotateCwIcon, SearchIcon, SearchXIcon } from "lucide-react"
+import { LoaderCircleIcon, PackageOpenIcon, RotateCwIcon, SearchIcon, SearchXIcon, StarIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FilmCardList, FilmCardListSkeleton } from "@/components/custom/film-card-list"
+import { readDefaultSourceId, writeDefaultSourceId } from "@/lib/search-preference"
 import { rendererLog } from "@/lib/logger"
 import { cn } from "@/lib/utils"
 import type { PluginInfo } from "@shared/ipc"
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/search")({
 interface SourceResult {
   /** 来源插件 ID */
   pluginId: string
-  /** 结果对应的关键词：与当前 q 不一致时视为过期数据，按「搜索中」处理 */
+  /** 结果对应的关键词：与当前 q 不一致时视为过期数据，按「未搜索」处理 */
   keyword: string
   status: "loading" | "success" | "error"
   items: Film[]
@@ -63,9 +64,16 @@ function RouteComponent() {
   const [plugins, setPlugins] = useState<PluginInfo[]>([])
   const [pluginsLoading, setPluginsLoading] = useState(true)
   const [pluginsError, setPluginsError] = useState<string>()
-  /** 当前选中的影视源，缺省时回落到第一个 */
-  const [activePluginId, setActivePluginId] = useState<string>()
+  /** 用户手动选中的影视源；undefined 时回落到默认搜索源 / 第一个 */
+  const [pickedPluginId, setPickedPluginId] = useState<string>()
+  /** 默认搜索源（持久化在 localStorage），进入页面且没有手动选择时生效 */
+  const [defaultPluginId, setDefaultPluginId] = useState<string | undefined>(() => readDefaultSourceId())
   const [results, setResults] = useState<Record<string, SourceResult>>({})
+  /**
+   * 已请求过的「源::关键词」→ 当时是自第几轮请求（searchNonce）。
+   * 切回已搜索过的分栏直接复用缓存结果；手动重跑时 nonce 变化会让它重新请求。
+   */
+  const requestedRef = useRef(new Map<string, number>())
   /** 自增即可重跑：插件列表 / 搜索各用一个，避免互相触发 */
   const [pluginNonce, setPluginNonce] = useState(0)
   const [searchNonce, setSearchNonce] = useState(0)
@@ -113,36 +121,46 @@ function RouteComponent() {
     }
   }, [])
 
-  // 关键词或影视源变化时，并发搜索全部源，谁先返回谁先渲染
-  useEffect(() => {
-    if (!q || plugins.length === 0) {
-      return
-    }
-    let cancelled = false
-    void (async () => {
-      const pending = plugins.map((plugin) => searchOne(plugin.manifest.id, q))
-      for (const task of pending) {
-        const state = await task
-        if (cancelled) {
-          return
-        }
-        setResults((prev) => ({ ...prev, [state.pluginId]: state }))
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [plugins, q, searchNonce, searchOne])
-
-  /** 当前选中的影视源：优先用户选择，否则第一个 */
+  /** 当前生效的影视源：用户选择 > 默认搜索源 > 第一个 */
   const activePlugin = useMemo(() => {
     if (plugins.length === 0) {
       return undefined
     }
-    return plugins.find((item) => item.manifest.id === activePluginId) ?? plugins[0]
-  }, [plugins, activePluginId])
+    const picked = plugins.find((item) => item.manifest.id === pickedPluginId)
+    if (picked) {
+      return picked
+    }
+    const fallback = plugins.find((item) => item.manifest.id === defaultPluginId)
+    return fallback ?? plugins[0]
+  }, [plugins, pickedPluginId, defaultPluginId])
 
-  /** 取某个影视源对当前关键词的结果；没有记录或关键词已变都算「搜索中」 */
+  const activeId = activePlugin?.manifest.id ?? ""
+  const activeName = activePlugin?.manifest.name ?? ""
+
+  // 只搜索当前选中的影视源：切换分栏 / 换关键词 / 手动重跑时才发请求
+  useEffect(() => {
+    if (!q || !activeId) {
+      return
+    }
+    const key = `${activeId}::${q}`
+    if (requestedRef.current.get(key) === searchNonce) {
+      return
+    }
+    requestedRef.current.set(key, searchNonce)
+    let cancelled = false
+    void (async () => {
+      const state = await searchOne(activeId, q)
+      if (cancelled) {
+        return
+      }
+      setResults((prev) => ({ ...prev, [activeId]: state }))
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [activeId, q, searchNonce, searchOne])
+
+  /** 取某个影视源对当前关键词的结果；没有记录或关键词已变都算「未搜索」 */
   const resultOf = useCallback(
     (pluginId: string | undefined): SourceResult | undefined => {
       if (!pluginId || !q) {
@@ -154,23 +172,22 @@ function RouteComponent() {
     [results, q],
   )
 
-  const retry = useCallback(
-    async (pluginId: string) => {
-      if (!q) {
-        return
-      }
-      setResults((prev) => ({ ...prev, [pluginId]: { pluginId, keyword: q, status: "loading", items: [] } }))
-      const state = await searchOne(pluginId, q)
-      setResults((prev) => ({ ...prev, [pluginId]: state }))
-    },
-    [q, searchOne],
-  )
+  const current = resultOf(activeId)
 
-  const current = resultOf(activePlugin?.manifest.id)
-  const activeId = activePlugin?.manifest.id ?? ""
-  const activeName = activePlugin?.manifest.name ?? ""
-  const totalCount = plugins.reduce((sum, plugin) => sum + (resultOf(plugin.manifest.id)?.items.length ?? 0), 0)
-  const pendingCount = plugins.filter((plugin) => resultOf(plugin.manifest.id) === undefined).length
+  /** 重新搜索当前源：自增 nonce 即可，去重标记按轮次判断，命中不了就会重新发请求 */
+  const rerun = useCallback(() => {
+    setSearchNonce((value) => value + 1)
+  }, [])
+
+  const isDefaultSource = defaultPluginId !== undefined && defaultPluginId === activeId
+
+  /** 把当前源设为默认 / 取消默认（取消后回落到列表里的第一个源） */
+  const toggleDefaultSource = useCallback(() => {
+    const next = isDefaultSource ? undefined : activeId || undefined
+    setDefaultPluginId(next)
+    writeDefaultSourceId(next)
+    log.debug(next ? `默认搜索源已设为 ${next}` : "已清除默认搜索源")
+  }, [isDefaultSource, activeId])
 
   const summary = (() => {
     if (pluginsLoading) {
@@ -185,8 +202,8 @@ function RouteComponent() {
     if (!q) {
       return "输入影片名称开始搜索"
     }
-    const pending = pendingCount > 0 ? `，${pendingCount} 个源搜索中` : ""
-    return `${plugins.length} 个影视源 · 共 ${totalCount} 条结果${pending}`
+    const status = !current ? "搜索中…" : current.status === "error" ? "搜索失败" : `${current.items.length} 条结果`
+    return `${activeName} · ${status}（共 ${plugins.length} 个影视源，只搜索当前源）`
   })()
 
   return (
@@ -207,11 +224,24 @@ function RouteComponent() {
         <div className="flex items-center gap-2">
           <SearchBox key={q ?? ""} defaultValue={q ?? ""} />
           <Button
+            variant={isDefaultSource ? "secondary" : "ghost"}
+            size="sm"
+            className="gap-1.5"
+            disabled={pluginsLoading || plugins.length === 0 || !activeId}
+            onClick={toggleDefaultSource}
+            title={
+              isDefaultSource ? "取消默认搜索源（之后回到列表里的第一个源）" : `进入搜索页时默认选中「${activeName}」`
+            }
+          >
+            <StarIcon className={cn("size-3.5", isDefaultSource && "fill-amber-400 text-amber-500")} />
+            {isDefaultSource ? "默认搜索源" : "设为默认"}
+          </Button>
+          <Button
             variant="ghost"
             size="icon"
-            title="重新搜索"
+            title="重新搜索当前源"
             disabled={!q || pluginsLoading || plugins.length === 0}
-            onClick={() => setSearchNonce((value) => value + 1)}
+            onClick={rerun}
           >
             <RotateCwIcon />
           </Button>
@@ -250,7 +280,7 @@ function RouteComponent() {
               <Placeholder
                 icon={<PackageOpenIcon className="size-8" />}
                 title="还没有可用的影视源"
-                description="安装并启用影视源插件后即可在这里聚合搜索"
+                description="安装并启用影视源插件后即可在这里搜索"
                 action={
                   <Link to="/plugin" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
                     去插件管理
@@ -265,19 +295,29 @@ function RouteComponent() {
               <Placeholder
                 icon={<SearchIcon className="size-8" />}
                 title="输入影片名称开始搜索"
-                description="搜索会并发请求全部已启用的影视源，结果按来源分栏展示"
+                description="只搜索当前选中的影视源，切换分栏才会去搜索对应的源"
               />
             </CardContent>
           </Card>
         ) : (
-          <Tabs value={activeId} onValueChange={(value) => setActivePluginId(String(value))}>
+          <Tabs value={activeId} onValueChange={(value) => setPickedPluginId(String(value))}>
             <TabsList>
               {plugins.map((plugin) => {
-                const state = resultOf(plugin.manifest.id)
+                const pluginId = plugin.manifest.id
+                const state = resultOf(pluginId)
                 return (
-                  <TabsTrigger key={plugin.manifest.id} value={plugin.manifest.id} className="gap-1.5">
+                  <TabsTrigger
+                    key={pluginId}
+                    value={pluginId}
+                    className="gap-1.5"
+                    title={
+                      pluginId === defaultPluginId ? `${plugin.manifest.name}（默认搜索源）` : plugin.manifest.name
+                    }
+                  >
                     <span>{plugin.manifest.name}</span>
-                    {!state && <LoaderCircleIcon className="animate-spin opacity-60" />}
+                    {pluginId === defaultPluginId && <StarIcon className="size-3 fill-amber-400 text-amber-500" />}
+                    {/* 只有当前源会真的发请求，没搜过的分栏不做标记 */}
+                    {pluginId === activeId && !state && <LoaderCircleIcon className="animate-spin opacity-60" />}
                     {state?.status === "success" && (
                       <Badge variant="secondary" className="h-4 px-1.5">
                         {state.items.length}
@@ -302,7 +342,7 @@ function RouteComponent() {
                       title={`${activeName} 搜索失败`}
                       description={current.error}
                       action={
-                        <Button variant="outline" size="sm" onClick={() => void retry(activeId)}>
+                        <Button variant="outline" size="sm" onClick={rerun}>
                           <RotateCwIcon />
                           重试
                         </Button>
@@ -318,7 +358,7 @@ function RouteComponent() {
                     <Placeholder
                       icon={<PackageOpenIcon className="size-8" />}
                       title={`没有找到与「${q}」相关的影片`}
-                      description={`${activeName}没有返回结果，可以切换其他影视源试试`}
+                      description={`${activeName} 没有返回结果，可以切换其他影视源试试`}
                     />
                   </CardContent>
                 </Card>

@@ -46,3 +46,8 @@ export { Prisma }
  * 收藏的影片：plugin + filmId 唯一（同一部片在同一个影视源里只会收藏一次）
  */
 export type FavoritesFilm = Prisma.FavoritesFilmModel
+/**
+ * Model WatchHistory
+ * 播放历史：以「影视源 + 影片 + 剧集」为单位记录观看到哪一秒
+ */
+export type WatchHistory = Prisma.WatchHistoryModel

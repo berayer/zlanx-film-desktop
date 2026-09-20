@@ -260,7 +260,7 @@ function RouteComponent() {
   const enabledCount = plugins.filter((item) => item.status === "active").length
 
   return (
-    <div className="mx-auto w-full max-w-5xl p-6 pt-2">
+    <div className="mx-auto w-full p-6 pt-2">
       <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="text-lg font-medium">插件管理</h1>
@@ -273,7 +273,7 @@ function RouteComponent() {
         </Button>
       </div>
 
-      <Card className="mt-3" size="sm">
+      <Card className="mx-auto mt-3" size="sm">
         <CardContent className="flex flex-wrap items-center gap-2">
           <Input
             value={url}
@@ -315,7 +315,7 @@ function RouteComponent() {
           <p>{plugins.length === 0 ? "还没有安装任何插件" : "没有匹配的插件"}</p>
         </div>
       ) : (
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((item) => (
             <PluginCard
               key={item.manifest.id}

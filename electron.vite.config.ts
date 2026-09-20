@@ -14,7 +14,10 @@ const alias = {
   "@generated": resolve("generated"),
 }
 
-/** 打进主进程包体的依赖：插件可通过 require 拿到（与 src/main/plugin/modules.ts 保持一致） */
+/**
+ * 打进主进程包体的依赖：插件可通过 require 拿到（与 src/main/plugin/modules.ts 保持一致）。
+ * 只列第三方库；Node 内置模块（`node:crypto` 等）Rollup 不会打包，无需在此登记。
+ */
 const HOST_BUNDLED_MODULES = ["cheerio", "he", "es-toolkit"]
 
 export default defineConfig({

@@ -109,15 +109,11 @@ function Index() {
     if (kwd.length === 0) {
       return items
     }
-    return items.filter((item) =>
-      [item.filmTitle, item.pluginName, item.filmYear ?? "", item.filmRegion ?? ""].some((field) =>
-        field.toLowerCase().includes(kwd),
-      ),
-    )
+    return items.filter((item) => [item.filmTitle, item.pluginName].some((field) => field.toLowerCase().includes(kwd)))
   }, [items, keyword])
 
   return (
-    <div className="mx-auto w-full max-w-6xl p-6 pt-2">
+    <div className="mx-auto w-full p-6 pt-2">
       <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="text-lg font-medium">我的收藏</h1>

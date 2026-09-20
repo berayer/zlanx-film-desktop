@@ -397,7 +397,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
-  FavoritesFilm: 'FavoritesFilm'
+  FavoritesFilm: 'FavoritesFilm',
+  WatchHistory: 'WatchHistory'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -413,7 +414,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "favoritesFilm"
+    modelProps: "favoritesFilm" | "watchHistory"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -491,6 +492,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WatchHistory: {
+      payload: Prisma.$WatchHistoryPayload<ExtArgs>
+      fields: Prisma.WatchHistoryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WatchHistoryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchHistoryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WatchHistoryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchHistoryPayload>
+        }
+        findFirst: {
+          args: Prisma.WatchHistoryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchHistoryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WatchHistoryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchHistoryPayload>
+        }
+        findMany: {
+          args: Prisma.WatchHistoryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchHistoryPayload>[]
+        }
+        create: {
+          args: Prisma.WatchHistoryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchHistoryPayload>
+        }
+        createMany: {
+          args: Prisma.WatchHistoryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WatchHistoryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchHistoryPayload>[]
+        }
+        delete: {
+          args: Prisma.WatchHistoryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchHistoryPayload>
+        }
+        update: {
+          args: Prisma.WatchHistoryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchHistoryPayload>
+        }
+        deleteMany: {
+          args: Prisma.WatchHistoryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WatchHistoryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WatchHistoryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchHistoryPayload>[]
+        }
+        upsert: {
+          args: Prisma.WatchHistoryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WatchHistoryPayload>
+        }
+        aggregate: {
+          args: Prisma.WatchHistoryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWatchHistory>
+        }
+        groupBy: {
+          args: Prisma.WatchHistoryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WatchHistoryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WatchHistoryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WatchHistoryCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -534,15 +609,29 @@ export const FavoritesFilmScalarFieldEnum = {
   filmId: 'filmId',
   filmTitle: 'filmTitle',
   filmPoster: 'filmPoster',
-  filmYear: 'filmYear',
-  filmRegion: 'filmRegion',
-  filmLatest: 'filmLatest',
-  filmDesc: 'filmDesc',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type FavoritesFilmScalarFieldEnum = (typeof FavoritesFilmScalarFieldEnum)[keyof typeof FavoritesFilmScalarFieldEnum]
+
+
+export const WatchHistoryScalarFieldEnum = {
+  id: 'id',
+  plugin: 'plugin',
+  pluginName: 'pluginName',
+  filmId: 'filmId',
+  filmTitle: 'filmTitle',
+  filmPoster: 'filmPoster',
+  episodeId: 'episodeId',
+  episodeTitle: 'episodeTitle',
+  position: 'position',
+  duration: 'duration',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WatchHistoryScalarFieldEnum = (typeof WatchHistoryScalarFieldEnum)[keyof typeof WatchHistoryScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -746,6 +835,7 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   favoritesFilm?: Prisma.FavoritesFilmOmit
+  watchHistory?: Prisma.WatchHistoryOmit
 }
 
 /* Types for Logging */

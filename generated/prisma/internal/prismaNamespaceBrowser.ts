@@ -51,7 +51,8 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  FavoritesFilm: 'FavoritesFilm'
+  FavoritesFilm: 'FavoritesFilm',
+  WatchHistory: 'WatchHistory'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -74,15 +75,29 @@ export const FavoritesFilmScalarFieldEnum = {
   filmId: 'filmId',
   filmTitle: 'filmTitle',
   filmPoster: 'filmPoster',
-  filmYear: 'filmYear',
-  filmRegion: 'filmRegion',
-  filmLatest: 'filmLatest',
-  filmDesc: 'filmDesc',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type FavoritesFilmScalarFieldEnum = (typeof FavoritesFilmScalarFieldEnum)[keyof typeof FavoritesFilmScalarFieldEnum]
+
+
+export const WatchHistoryScalarFieldEnum = {
+  id: 'id',
+  plugin: 'plugin',
+  pluginName: 'pluginName',
+  filmId: 'filmId',
+  filmTitle: 'filmTitle',
+  filmPoster: 'filmPoster',
+  episodeId: 'episodeId',
+  episodeTitle: 'episodeTitle',
+  position: 'position',
+  duration: 'duration',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WatchHistoryScalarFieldEnum = (typeof WatchHistoryScalarFieldEnum)[keyof typeof WatchHistoryScalarFieldEnum]
 
 
 export const SortOrder = {

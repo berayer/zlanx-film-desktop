@@ -13,7 +13,14 @@ import type {
 } from "@shared/ipc"
 import { PLUGIN_IPC } from "@shared/ipc"
 import { SourceApi } from "@shared/plugin-api"
-import { DB_API_IPC, type DB_API, type FavoriteFilm, type FavoriteFilmInput } from "@shared/db-api"
+import {
+  DB_API_IPC,
+  type DB_API,
+  type FavoriteFilm,
+  type FavoriteFilmInput,
+  type WatchHistoryEntry,
+  type WatchProgressInput,
+} from "@shared/db-api"
 
 /** 统一包装 IPC 返回结果*/
 function unwrap<T>(envelope: IpcEnvelope<T>): T {
@@ -51,7 +58,7 @@ const plugins: PluginsApi<SourceApi> = {
   resetConfig: (id) => ipcRenderer.invoke(PLUGIN_IPC.resetConfig, id).then((e) => unwrap<PluginInfo>(e)),
 }
 
-/** 收藏相关的 IPC 通信（返回值已是 DTO，直接透传即可） */
+/** 收藏 / 播放历史相关的 IPC 通信（返回值已是 DTO，直接透传即可） */
 const api: DB_API = {
   getFavoritesFilms: () => ipcRenderer.invoke(DB_API_IPC.getFavoritesFilms).then((rows) => rows as FavoriteFilm[]),
   addFavoritesFilm: (film: FavoriteFilmInput) =>
@@ -60,6 +67,15 @@ const api: DB_API = {
     ipcRenderer.invoke(DB_API_IPC.removeFavoritesFilm, plugin, filmId).then((removed) => removed as boolean),
   isFavoritesFilm: (plugin: string, filmId: string) =>
     ipcRenderer.invoke(DB_API_IPC.isFavoritesFilm, plugin, filmId).then((favorited) => favorited as boolean),
+  getWatchHistory: (limit?: number) =>
+    ipcRenderer.invoke(DB_API_IPC.getWatchHistory, limit).then((rows) => rows as WatchHistoryEntry[]),
+  getFilmWatchHistory: (plugin: string, filmId: string) =>
+    ipcRenderer.invoke(DB_API_IPC.getFilmWatchHistory, plugin, filmId).then((rows) => rows as WatchHistoryEntry[]),
+  saveWatchProgress: (entry: WatchProgressInput) =>
+    ipcRenderer.invoke(DB_API_IPC.saveWatchProgress, entry).then((row) => row as WatchHistoryEntry),
+  removeWatchHistory: (plugin: string, filmId: string, entryId?: number) =>
+    ipcRenderer.invoke(DB_API_IPC.removeWatchHistory, plugin, filmId, entryId).then((count) => count as number),
+  clearWatchHistory: () => ipcRenderer.invoke(DB_API_IPC.clearWatchHistory).then((count) => count as number),
 }
 
 const electronAPI: ElectronAPI = {

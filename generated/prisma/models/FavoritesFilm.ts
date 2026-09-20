@@ -41,10 +41,6 @@ export type FavoritesFilmMinAggregateOutputType = {
   filmId: string | null
   filmTitle: string | null
   filmPoster: string | null
-  filmYear: string | null
-  filmRegion: string | null
-  filmLatest: string | null
-  filmDesc: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -56,10 +52,6 @@ export type FavoritesFilmMaxAggregateOutputType = {
   filmId: string | null
   filmTitle: string | null
   filmPoster: string | null
-  filmYear: string | null
-  filmRegion: string | null
-  filmLatest: string | null
-  filmDesc: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -71,10 +63,6 @@ export type FavoritesFilmCountAggregateOutputType = {
   filmId: number
   filmTitle: number
   filmPoster: number
-  filmYear: number
-  filmRegion: number
-  filmLatest: number
-  filmDesc: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -96,10 +84,6 @@ export type FavoritesFilmMinAggregateInputType = {
   filmId?: true
   filmTitle?: true
   filmPoster?: true
-  filmYear?: true
-  filmRegion?: true
-  filmLatest?: true
-  filmDesc?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -111,10 +95,6 @@ export type FavoritesFilmMaxAggregateInputType = {
   filmId?: true
   filmTitle?: true
   filmPoster?: true
-  filmYear?: true
-  filmRegion?: true
-  filmLatest?: true
-  filmDesc?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -126,10 +106,6 @@ export type FavoritesFilmCountAggregateInputType = {
   filmId?: true
   filmTitle?: true
   filmPoster?: true
-  filmYear?: true
-  filmRegion?: true
-  filmLatest?: true
-  filmDesc?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -228,10 +204,6 @@ export type FavoritesFilmGroupByOutputType = {
   filmId: string
   filmTitle: string
   filmPoster: string | null
-  filmYear: string | null
-  filmRegion: string | null
-  filmLatest: string | null
-  filmDesc: string | null
   createdAt: Date
   updatedAt: Date
   _count: FavoritesFilmCountAggregateOutputType | null
@@ -266,10 +238,6 @@ export type FavoritesFilmWhereInput = {
   filmId?: Prisma.StringFilter<"FavoritesFilm"> | string
   filmTitle?: Prisma.StringFilter<"FavoritesFilm"> | string
   filmPoster?: Prisma.StringNullableFilter<"FavoritesFilm"> | string | null
-  filmYear?: Prisma.StringNullableFilter<"FavoritesFilm"> | string | null
-  filmRegion?: Prisma.StringNullableFilter<"FavoritesFilm"> | string | null
-  filmLatest?: Prisma.StringNullableFilter<"FavoritesFilm"> | string | null
-  filmDesc?: Prisma.StringNullableFilter<"FavoritesFilm"> | string | null
   createdAt?: Prisma.DateTimeFilter<"FavoritesFilm"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"FavoritesFilm"> | Date | string
 }
@@ -281,10 +249,6 @@ export type FavoritesFilmOrderByWithRelationInput = {
   filmId?: Prisma.SortOrder
   filmTitle?: Prisma.SortOrder
   filmPoster?: Prisma.SortOrderInput | Prisma.SortOrder
-  filmYear?: Prisma.SortOrderInput | Prisma.SortOrder
-  filmRegion?: Prisma.SortOrderInput | Prisma.SortOrder
-  filmLatest?: Prisma.SortOrderInput | Prisma.SortOrder
-  filmDesc?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -300,10 +264,6 @@ export type FavoritesFilmWhereUniqueInput = Prisma.AtLeast<{
   filmId?: Prisma.StringFilter<"FavoritesFilm"> | string
   filmTitle?: Prisma.StringFilter<"FavoritesFilm"> | string
   filmPoster?: Prisma.StringNullableFilter<"FavoritesFilm"> | string | null
-  filmYear?: Prisma.StringNullableFilter<"FavoritesFilm"> | string | null
-  filmRegion?: Prisma.StringNullableFilter<"FavoritesFilm"> | string | null
-  filmLatest?: Prisma.StringNullableFilter<"FavoritesFilm"> | string | null
-  filmDesc?: Prisma.StringNullableFilter<"FavoritesFilm"> | string | null
   createdAt?: Prisma.DateTimeFilter<"FavoritesFilm"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"FavoritesFilm"> | Date | string
 }, "id" | "plugin_filmId">
@@ -315,10 +275,6 @@ export type FavoritesFilmOrderByWithAggregationInput = {
   filmId?: Prisma.SortOrder
   filmTitle?: Prisma.SortOrder
   filmPoster?: Prisma.SortOrderInput | Prisma.SortOrder
-  filmYear?: Prisma.SortOrderInput | Prisma.SortOrder
-  filmRegion?: Prisma.SortOrderInput | Prisma.SortOrder
-  filmLatest?: Prisma.SortOrderInput | Prisma.SortOrder
-  filmDesc?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.FavoritesFilmCountOrderByAggregateInput
@@ -338,10 +294,6 @@ export type FavoritesFilmScalarWhereWithAggregatesInput = {
   filmId?: Prisma.StringWithAggregatesFilter<"FavoritesFilm"> | string
   filmTitle?: Prisma.StringWithAggregatesFilter<"FavoritesFilm"> | string
   filmPoster?: Prisma.StringNullableWithAggregatesFilter<"FavoritesFilm"> | string | null
-  filmYear?: Prisma.StringNullableWithAggregatesFilter<"FavoritesFilm"> | string | null
-  filmRegion?: Prisma.StringNullableWithAggregatesFilter<"FavoritesFilm"> | string | null
-  filmLatest?: Prisma.StringNullableWithAggregatesFilter<"FavoritesFilm"> | string | null
-  filmDesc?: Prisma.StringNullableWithAggregatesFilter<"FavoritesFilm"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"FavoritesFilm"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"FavoritesFilm"> | Date | string
 }
@@ -352,10 +304,6 @@ export type FavoritesFilmCreateInput = {
   filmId: string
   filmTitle: string
   filmPoster?: string | null
-  filmYear?: string | null
-  filmRegion?: string | null
-  filmLatest?: string | null
-  filmDesc?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -367,10 +315,6 @@ export type FavoritesFilmUncheckedCreateInput = {
   filmId: string
   filmTitle: string
   filmPoster?: string | null
-  filmYear?: string | null
-  filmRegion?: string | null
-  filmLatest?: string | null
-  filmDesc?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -381,10 +325,6 @@ export type FavoritesFilmUpdateInput = {
   filmId?: Prisma.StringFieldUpdateOperationsInput | string
   filmTitle?: Prisma.StringFieldUpdateOperationsInput | string
   filmPoster?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmYear?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmRegion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmLatest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -396,10 +336,6 @@ export type FavoritesFilmUncheckedUpdateInput = {
   filmId?: Prisma.StringFieldUpdateOperationsInput | string
   filmTitle?: Prisma.StringFieldUpdateOperationsInput | string
   filmPoster?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmYear?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmRegion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmLatest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -411,10 +347,6 @@ export type FavoritesFilmCreateManyInput = {
   filmId: string
   filmTitle: string
   filmPoster?: string | null
-  filmYear?: string | null
-  filmRegion?: string | null
-  filmLatest?: string | null
-  filmDesc?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -425,10 +357,6 @@ export type FavoritesFilmUpdateManyMutationInput = {
   filmId?: Prisma.StringFieldUpdateOperationsInput | string
   filmTitle?: Prisma.StringFieldUpdateOperationsInput | string
   filmPoster?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmYear?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmRegion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmLatest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -440,10 +368,6 @@ export type FavoritesFilmUncheckedUpdateManyInput = {
   filmId?: Prisma.StringFieldUpdateOperationsInput | string
   filmTitle?: Prisma.StringFieldUpdateOperationsInput | string
   filmPoster?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmYear?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmRegion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmLatest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  filmDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -460,10 +384,6 @@ export type FavoritesFilmCountOrderByAggregateInput = {
   filmId?: Prisma.SortOrder
   filmTitle?: Prisma.SortOrder
   filmPoster?: Prisma.SortOrder
-  filmYear?: Prisma.SortOrder
-  filmRegion?: Prisma.SortOrder
-  filmLatest?: Prisma.SortOrder
-  filmDesc?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -479,10 +399,6 @@ export type FavoritesFilmMaxOrderByAggregateInput = {
   filmId?: Prisma.SortOrder
   filmTitle?: Prisma.SortOrder
   filmPoster?: Prisma.SortOrder
-  filmYear?: Prisma.SortOrder
-  filmRegion?: Prisma.SortOrder
-  filmLatest?: Prisma.SortOrder
-  filmDesc?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -494,10 +410,6 @@ export type FavoritesFilmMinOrderByAggregateInput = {
   filmId?: Prisma.SortOrder
   filmTitle?: Prisma.SortOrder
   filmPoster?: Prisma.SortOrder
-  filmYear?: Prisma.SortOrder
-  filmRegion?: Prisma.SortOrder
-  filmLatest?: Prisma.SortOrder
-  filmDesc?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -535,10 +447,6 @@ export type FavoritesFilmSelect<ExtArgs extends runtime.Types.Extensions.Interna
   filmId?: boolean
   filmTitle?: boolean
   filmPoster?: boolean
-  filmYear?: boolean
-  filmRegion?: boolean
-  filmLatest?: boolean
-  filmDesc?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["favoritesFilm"]>
@@ -550,10 +458,6 @@ export type FavoritesFilmSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   filmId?: boolean
   filmTitle?: boolean
   filmPoster?: boolean
-  filmYear?: boolean
-  filmRegion?: boolean
-  filmLatest?: boolean
-  filmDesc?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["favoritesFilm"]>
@@ -565,10 +469,6 @@ export type FavoritesFilmSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   filmId?: boolean
   filmTitle?: boolean
   filmPoster?: boolean
-  filmYear?: boolean
-  filmRegion?: boolean
-  filmLatest?: boolean
-  filmDesc?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["favoritesFilm"]>
@@ -580,15 +480,11 @@ export type FavoritesFilmSelectScalar = {
   filmId?: boolean
   filmTitle?: boolean
   filmPoster?: boolean
-  filmYear?: boolean
-  filmRegion?: boolean
-  filmLatest?: boolean
-  filmDesc?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type FavoritesFilmOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "plugin" | "pluginName" | "filmId" | "filmTitle" | "filmPoster" | "filmYear" | "filmRegion" | "filmLatest" | "filmDesc" | "createdAt" | "updatedAt", ExtArgs["result"]["favoritesFilm"]>
+export type FavoritesFilmOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "plugin" | "pluginName" | "filmId" | "filmTitle" | "filmPoster" | "createdAt" | "updatedAt", ExtArgs["result"]["favoritesFilm"]>
 
 export type $FavoritesFilmPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "FavoritesFilm"
@@ -600,13 +496,6 @@ export type $FavoritesFilmPayload<ExtArgs extends runtime.Types.Extensions.Inter
     filmId: string
     filmTitle: string
     filmPoster: string | null
-    /**
-     * 年份 / 地区 / 最新状态 / 简介：收藏页与播放页展示用，影视源没给就是 null
-     */
-    filmYear: string | null
-    filmRegion: string | null
-    filmLatest: string | null
-    filmDesc: string | null
     /**
      * 收藏时间，列表按它倒序
      */
@@ -1041,10 +930,6 @@ export interface FavoritesFilmFieldRefs {
   readonly filmId: Prisma.FieldRef<"FavoritesFilm", 'String'>
   readonly filmTitle: Prisma.FieldRef<"FavoritesFilm", 'String'>
   readonly filmPoster: Prisma.FieldRef<"FavoritesFilm", 'String'>
-  readonly filmYear: Prisma.FieldRef<"FavoritesFilm", 'String'>
-  readonly filmRegion: Prisma.FieldRef<"FavoritesFilm", 'String'>
-  readonly filmLatest: Prisma.FieldRef<"FavoritesFilm", 'String'>
-  readonly filmDesc: Prisma.FieldRef<"FavoritesFilm", 'String'>
   readonly createdAt: Prisma.FieldRef<"FavoritesFilm", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"FavoritesFilm", 'DateTime'>
 }

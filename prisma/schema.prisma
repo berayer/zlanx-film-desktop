@@ -15,15 +15,37 @@ model FavoritesFilm {
   filmId     String   @map("film_id")
   filmTitle  String   @map("film_title")
   filmPoster String?  @map("film_poster")
-  /// 年份 / 地区 / 最新状态 / 简介：收藏页与播放页展示用，影视源没给就是 null
-  filmYear   String?  @map("film_year")
-  filmRegion String?  @map("film_region")
-  filmLatest String?  @map("film_latest")
-  filmDesc   String?  @map("film_desc")
   /// 收藏时间，列表按它倒序
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@unique([plugin, filmId])
   @@index([createdAt])
+}
+
+/// 播放历史：以「影视源 + 影片 + 剧集」为单位记录观看到哪一秒
+model WatchHistory {
+  id           Int     @id @default(autoincrement())
+  plugin       String
+  /// 影视源名称快照：插件被卸载后历史记录仍然能显示来源
+  pluginName   String  @map("plugin_name")
+  filmId       String  @map("film_id")
+  /// 影片标题 / 封面快照：播放页不再回查详情也能渲染历史列表
+  filmTitle    String  @map("film_title")
+  filmPoster   String? @map("film_poster")
+  episodeId    String  @map("episode_id")
+  episodeTitle String  @map("episode_title")
+  /// 已播放到的秒数
+  position     Float   @default(0)
+  /// 总时长（秒），还没拿到元数据时为 0
+  duration     Float   @default(0)
+
+  /// 首次观看时间
+  createdAt DateTime @default(now()) @map("created_at")
+  /// 最近一次更新进度的时间，历史列表按它倒序
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([plugin, filmId, episodeId])
+  @@index([updatedAt])
+  @@index([plugin, filmId])
 }

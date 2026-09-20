@@ -11,6 +11,7 @@ export function FilmSearchInput({ className }: React.ComponentPropsWithoutRef<"d
   const handleSearch = useCallback(() => {
     const value = inputRef.current?.value
     if (!value) return
+    inputRef.current!.value = ""
     router.navigate({ to: "/search", search: { q: value } })
   }, [inputRef, router])
 

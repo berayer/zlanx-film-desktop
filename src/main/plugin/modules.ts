@@ -8,10 +8,13 @@
  * 2. 运行时由 `PluginManager` 通过 `options.modules` 注入沙箱，插件 `require` 时直接命中，
  *    不再走 Node 的模块解析（asar 里解析不到符号链接型的 node_modules）。
  *
- * 新增一个可 require 的模块：装到 `dependencies` → 在这里 import 并加进下面的表 →
+ * 新增一个可 require 的模块（第三方库）：装到 `dependencies` → 在这里 import 并加进下面的表 →
+ * 同步加进 `electron.vite.config.ts` 的 `HOST_BUNDLED_MODULES` →
  * 名字自动进入 `HOST_MODULE_NAMES`（由 `initPluginManager` 传给管理器）。
  * 注意不要放进 devDependencies：那会被 electron-builder 裁掉。
+ * Node 内置模块（`node:crypto` 等）只需加进下面的表，后面两步都不需要。
  */
+import * as crypto from "node:crypto"
 import * as cheerio from "cheerio"
 import * as esToolkit from "es-toolkit"
 import * as he from "he"
@@ -55,11 +58,22 @@ function toPluginModule<T extends object>(namespace: T): T {
   return merged as T
 }
 
-/** 键名必须与插件里写的模块名完全一致（支持子路径，如 `es-toolkit/array`） */
+/**
+ * 键名必须与插件里写的模块名完全一致（支持子路径，如 `es-toolkit/array`）。
+ *
+ * Node 内置模块（`node:crypto` 这类）直接写在表里即可，不需要装依赖、也不需要
+ * 加进 `electron.vite.config.ts` 的 `HOST_BUNDLED_MODULES`——Rollup 本来就不会把
+ * 内置模块打进包体。这里同时挂了不带前缀的 `crypto`，两种写法都能 require 到。
+ */
+const nodeCrypto = toPluginModule(crypto)
+
 export const HOST_MODULES: Record<string, unknown> = {
   cheerio: toPluginModule(cheerio),
   he: toPluginModule(he),
   "es-toolkit": toPluginModule(esToolkit),
+  // 同一个对象挂两个名字，`require("node:crypto")` 与 `require("crypto")` 都命中同一份
+  "node:crypto": nodeCrypto,
+  crypto: nodeCrypto,
 }
 
 /** 允许插件 require 的模块名，默认交给 `initPluginManager` 作为 allowRequire */

@@ -2,6 +2,7 @@ import { createRootRoute, Link, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 import { Button } from "@/components/ui/button"
 import { WindowController } from "@/components/custom/window-controller"
+import { NavBackButton } from "@/components/custom/nav-back-button"
 import { Separator } from "@/components/ui/separator"
 import { RotateCcwClockIcon, MonitorPlayIcon } from "lucide-react"
 import { FilmSearchInput } from "@/components/custom/film-search-input"
@@ -15,7 +16,8 @@ const RootLayout = () => (
           <div className="rounded-full bg-secondary p-1">
             <MonitorPlayIcon className="size-5 text-primary" />
           </div>
-          <div className="flex no-drag">
+          <div className="flex items-center no-drag">
+            <NavBackButton />
             <Link to="/">
               <Button variant="ghost">收藏</Button>
             </Link>
@@ -26,9 +28,11 @@ const RootLayout = () => (
           </div>
         </div>
         <div className="flex items-center no-drag">
-          <Button variant="ghost" size="icon">
-            <RotateCcwClockIcon />
-          </Button>
+          <Link to="/history" title="播放历史">
+            <Button variant="ghost" size="icon">
+              <RotateCcwClockIcon />
+            </Button>
+          </Link>
           <Separator orientation="vertical" className="m-auto mx-2 h-4" />
           <WindowController />
         </div>
