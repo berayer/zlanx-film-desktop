@@ -9,6 +9,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FilmCardList } from "@/components/custom/film-card-list"
 import { LoadingPlaceholder } from "@/components/custom/loading-placeholder"
 import { readDefaultSourceId, writeDefaultSourceId } from "@/lib/search-preference"
+import {
+  cachedSearchCount,
+  discardCachedSearch,
+  getCachedSearch,
+  setCachedSearch,
+  touchCachedSearch,
+} from "@/lib/search-cache"
 import { rendererLog } from "@/lib/logger"
 import { cn } from "@/lib/utils"
 import type { PluginInfo } from "@shared/ipc"
@@ -148,9 +155,24 @@ function RouteComponent() {
       return
     }
     requestedRef.current.set(key, searchNonce)
+
+    // 内存缓存命中：连请求都不用发 —— 渲染层由 resultOf 直接读同一份缓存，
+    // 所以这里不需要 setState（切回搜过的分栏、甚至重进搜索页都是立刻出结果）
+    if (getCachedSearch(activeId, q)) {
+      touchCachedSearch(activeId, q)
+      log.debug(`[${activeId}] 搜索「${q}」命中内存缓存（当前缓存 ${cachedSearchCount()} 条）`)
+      return
+    }
+
     let cancelled = false
     void (async () => {
       const state = await searchOne(activeId, q)
+      // 只有成功的结果进缓存：失败要留给用户重试。
+      // 这里不等 cancelled 判断 —— 用户中途切走（比如点进播放页）时结果同样有效，
+      // 留着缓存，回来就不用再搜一次。
+      if (state.status === "success") {
+        setCachedSearch(activeId, q, state.items)
+      }
       if (cancelled) {
         return
       }
@@ -168,17 +190,28 @@ function RouteComponent() {
         return undefined
       }
       const state = results[pluginId]
-      return state && state.keyword === q ? state : undefined
+      if (state && state.keyword === q) {
+        return state
+      }
+      // 组件内的 results 会随卸载丢失，内存缓存不会：搜过的「源 + 关键词」直接复用
+      const cached = getCachedSearch(pluginId, q)
+      if (cached) {
+        return { pluginId, keyword: q, status: "success", items: cached }
+      }
+      return undefined
     },
     [results, q],
   )
 
   const current = resultOf(activeId)
 
-  /** 重新搜索当前源：自增 nonce 即可，去重标记按轮次判断，命中不了就会重新发请求 */
+  /** 重新搜索当前源：丢掉这次搜索的缓存 + 自增轮次，去重标记按轮次判断，命中不了就会重新发请求 */
   const rerun = useCallback(() => {
+    if (activeId && q) {
+      discardCachedSearch(activeId, q)
+    }
     setSearchNonce((value) => value + 1)
-  }, [])
+  }, [activeId, q])
 
   const isDefaultSource = defaultPluginId !== undefined && defaultPluginId === activeId
 
