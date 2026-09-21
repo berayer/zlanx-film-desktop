@@ -13,7 +13,8 @@ import {
   DialogPortal,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { HistoryCardList, HistoryCardListSkeleton, type HistoryGroup } from "@/components/custom/history-card-list"
+import { HistoryCardList, type HistoryGroup } from "@/components/custom/history-card-list"
+import { LoadingPlaceholder } from "@/components/custom/loading-placeholder"
 import type { WatchHistoryEntry } from "@shared/db-api"
 import { rendererLog } from "@/lib/logger"
 import {
@@ -241,7 +242,7 @@ function History() {
 
       <div className="mt-4">
         {loading ? (
-          <HistoryCardListSkeleton />
+          <LoadingPlaceholder label="正在读取播放历史…" />
         ) : error ? (
           <div className="flex flex-col items-center gap-2 py-16 text-sm text-muted-foreground">
             <ClapperboardIcon className="size-8" />

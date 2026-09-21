@@ -84,18 +84,3 @@ function FavoriteCard({
     </div>
   )
 }
-
-/** 收藏页加载占位（列数与 FavoriteCardList 保持一致） */
-export function FavoriteCardListSkeleton({ count = 14 }: { count?: number }) {
-  return (
-    <div className="grid animate-pulse grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
-      {Array.from({ length: count }, (_, index) => (
-        <div key={index}>
-          <div className="aspect-2/3 w-full rounded-lg bg-muted" />
-          <div className="mt-2 h-4 w-4/5 rounded bg-muted" />
-          <div className="mt-1 h-3 w-2/5 rounded bg-muted" />
-        </div>
-      ))}
-    </div>
-  )
-}

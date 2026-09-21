@@ -1,29 +1,14 @@
-import { mkdirSync } from "node:fs"
-import path from "node:path"
-import { app } from "electron"
-import "dotenv/config"
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3"
 import { PrismaClient } from "@generated/prisma/client"
+import { connectionString } from "@main/lib/db-path"
 
 /**
- * SQLite 文件位置。
+ * Prisma 客户端（单例）。
  *
- * dev 用 `.env` 里的 `DATABASE_URL`（`file:./data/dev.db`，相对项目根目录）；
- * 打包后没有 `.env`，退回到用户数据目录，否则连接串会变成 "undefined"。
+ * 数据库文件位置统一由 `@main/lib/db-path` 决定（dev 走 .env 的 DATABASE_URL，
+ * 打包后走 userData/data/dev.db）；表结构则由 `@main/lib/migrate` 在启动时
+ * 执行 prisma/migrations 里的 SQL 补齐，所以这里拿到连接即可直接使用。
  */
-function databaseUrl(): string {
-  const fromEnv = process.env["DATABASE_URL"]?.trim()
-  if (fromEnv) {
-    return fromEnv
-  }
-  return `file:${path.join(app.getPath("userData"), "data", "dev.db")}`
-}
-
-const connectionString = databaseUrl()
-
-// better-sqlite3 不会自动建目录，dev 首次启动 / 打包后首次运行时要补上
-mkdirSync(path.dirname(path.resolve(connectionString.replace(/^file:/, ""))), { recursive: true })
-
 const adapter = new PrismaBetterSqlite3({ url: connectionString })
 const prisma = new PrismaClient({ adapter })
 

@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: zlanx-film-desktop
+appId: zlanx.film.desktop
+productName: 蓝星影视
 directories:
   buildResources: build
 files:
@@ -9,8 +9,20 @@ files:
   - "!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
   - "!{.env,.env.*,.npmrc,pnpm-lock.yaml}"
   - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
+  # Prisma Client 已被 Rollup 编进 out/main（入口 + 分块）；迁移 SQL 走下面的 extraResources，
+  # 这两份源码/产物不需要再进 app.asar
+  - "!generated/*"
+  - "!prisma/*"
+  # data/ 是 dev 用的本地库，用户数据始终落在 userData，不能跟着安装包走
+  - "!data/*"
 asarUnpack:
   - resources/**
+  # better-sqlite3 的原生模块必须从 asar 解包：asar 里的 .node 是没法 dlopen 的
+  - "**/node_modules/better-sqlite3/**"
+extraResources:
+  # 迁移 SQL：启动时由 src/main/lib/migrate.ts 按顺序执行（等价于 prisma migrate deploy）
+  - from: prisma/migrations
+    to: migrations
 win:
   executableName: zlanx-film-desktop
 nsis:

@@ -6,7 +6,8 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FilmCardList, FilmCardListSkeleton } from "@/components/custom/film-card-list"
+import { FilmCardList } from "@/components/custom/film-card-list"
+import { LoadingPlaceholder } from "@/components/custom/loading-placeholder"
 import { readDefaultSourceId, writeDefaultSourceId } from "@/lib/search-preference"
 import { rendererLog } from "@/lib/logger"
 import { cn } from "@/lib/utils"
@@ -250,7 +251,7 @@ function RouteComponent() {
 
       <div className="mt-3">
         {pluginsLoading ? (
-          <FilmCardListSkeleton />
+          <LoadingPlaceholder label="正在加载影视源…" />
         ) : pluginsError ? (
           <Card size="sm">
             <CardContent>
@@ -363,7 +364,7 @@ function RouteComponent() {
                   </CardContent>
                 </Card>
               ) : (
-                <FilmCardListSkeleton />
+                <LoadingPlaceholder label="正在搜索…" />
               )}
             </div>
           </Tabs>

@@ -81,14 +81,3 @@ export function EpisodeGrid({ episodes, activeId, watched, pending, onSelect, cl
     </div>
   )
 }
-
-/** 详情加载中的剧集占位 */
-export function EpisodeGridSkeleton({ count = 12 }: { count?: number }) {
-  return (
-    <div className="grid animate-pulse grid-cols-3 gap-2">
-      {Array.from({ length: count }, (_, index) => (
-        <div key={index} className="h-8 rounded-md bg-muted" />
-      ))}
-    </div>
-  )
-}

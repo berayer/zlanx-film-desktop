@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FavoriteCardList, FavoriteCardListSkeleton } from "@/components/custom/favorite-card-list"
+import { FavoriteCardList } from "@/components/custom/favorite-card-list"
+import { LoadingPlaceholder } from "@/components/custom/loading-placeholder"
 import type { FavoriteFilm } from "@shared/db-api"
 import { rendererLog } from "@/lib/logger"
 import { ClapperboardIcon, LoaderCircleIcon, RefreshCwIcon, SearchIcon, StarIcon } from "lucide-react"
@@ -144,7 +145,7 @@ function Index() {
 
       <div className="mt-4">
         {loading ? (
-          <FavoriteCardListSkeleton />
+          <LoadingPlaceholder label="正在读取收藏…" />
         ) : error ? (
           <div className="flex flex-col items-center gap-2 py-16 text-sm text-muted-foreground">
             <ClapperboardIcon className="size-8" />
