@@ -8,3 +8,5 @@ plugins/
 .tanstack/
 .workbuddy/
 plugin-src/
+img/
+releases/

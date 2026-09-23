@@ -120,6 +120,64 @@ pnpm exec prisma generate                      # 重新生成客户端类型
 - 启动日志会打印一行 `已启用系统代理（示例解析结果：PROXY 127.0.0.1:7890 / DIRECT）`，排查网络问题时看它即可。
 - 需要账号密码的企业代理目前只打印一条 warn 日志（应用不提供凭据输入），这类代理下的请求会被取消。
 
+## 打包与发布
+
+- **macOS 产物只能在 macOS 上构建**：`codesign` / `hdiutil` / dmg 都是 macOS 独有工具，
+  electron-builder 在非 macOS 上跑 `--mac` 会直接报错，没有跨平台绕法。
+  Windows 可在 Linux / macOS 上打（需 wine），Linux 产物需 docker，AppImage 只能在 Linux 上打。
+- 因此仓库带了 [`.github/workflows/release.yml`](./.github/workflows/release.yml)：推 `v*` tag 触发，
+  `macos-13` 出 x64、`macos-14` 出 arm64、`windows-latest` 出 nsis 安装包，最后自动创建 GitHub Release 并附上产物；
+  也可以手动 Run workflow 只出产物（不建 Release）。
+- CI 每个 job 都跑完整的 `pnpm install --frozen-lockfile` —— postinstall 里的 `electron-builder install-app-deps`
+  负责为当前平台 + Electron ABI 重新编译 `better-sqlite3`（`npmRebuild: false`，打包阶段不再编译），
+  所以跨平台打包时这一步不能跳过。
+- 未签名未公证的 macOS 包在别人机器上会被 Gatekeeper 拦（"已损坏，无法打开"，首次需右键 → 打开）。
+  正式分发请按下面「签名与公证」配好 CI secrets。
+
+## 签名与公证
+
+**一次性的 Apple 侧准备**（需要 Apple Developer Program 会员资格）：
+
+1. 在 `developer.apple.com` → Certificates 建一个 **Developer ID Application** 证书，下载后导入钥匙串；
+   再从钥匙串里把它连同私钥导出成 `.p12`（导出时设一个密码）。
+2. 在 `appleid.apple.com` → Sign-In and Security → App-Specific Passwords 生成一个**App 专用密码**。
+3. 在 `developer.apple.com` → Membership 里抄下 **Team ID**。
+   （也可以改用 App Store Connect API Key：`APPLE_API_KEY` / `APPLE_API_KEY_ID` / `APPLE_API_ISSUER_ID`。）
+
+**填进 GitHub Secrets**（仓库 Settings → Secrets and variables → Actions）：
+
+```bash
+# .p12 转 base64 单行字符串，值贴进 CSC_LINK
+base64 -w0 DeveloperID.p12 | gh secret set CSC_LINK
+gh secret set CSC_KEY_PASSWORD      # 导出 .p12 时设的密码
+gh secret set APPLE_ID              # Apple 开发者账号邮箱
+gh secret set APPLE_APP_SPECIFIC_PASSWORD
+gh secret set APPLE_TEAM_ID
+# Windows 可选：代码签名证书（.pfx/.p12 的 base64）
+gh secret set WIN_CSC_LINK
+gh secret set WIN_CSC_KEY_PASSWORD
+```
+
+**仓库侧已经就位的部分**（无需再改）：
+
+- `electron-builder.yml`：`hardenedRuntime: true` + `build/entitlements.mac.plist`（公证的硬性前置条件），
+  `gatekeeperAssess: false`，`notarize: false`（本地打包不会因为缺凭据直接失败）。
+- `@electron/notarize` 已加进 devDependencies —— electron-builder 不自带它，公证时从项目里 `require`，
+  缺了会直接报 module not found。
+- `release.yml` 的 mac job：配齐 `CSC_LINK` + `APPLE_ID` + `APPLE_TEAM_ID` 时自动追加
+  `--config.mac.notarize=true`；没配就只出产物并打一条 warning。
+
+本地想验证签名结果（需已装证书的本机）：
+
+```bash
+pnpm build:mac
+codesign -dv --verbose=4 dist/mac/蓝星影视.app   # 看签名链
+spctl -a -t exec -vv dist/mac/蓝星影视.app        # 看 Gatekeeper 评估
+```
+
+公证是异步的：CI 里 electron-builder 会阻塞等待 Apple 返回结果并自动 staple
+（断网机器首次打开时也能通过），通常 1–5 分钟。
+
 ## 约定
 
 - 日志统一走 electron-log（主进程 `src/main/logger.ts` 的 `hostLog`，渲染端 `src/renderer/src/lib/logger.ts` 的 `rendererLog`），不使用 `console.*`。
