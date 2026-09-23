@@ -131,52 +131,13 @@ pnpm exec prisma generate                      # 重新生成客户端类型
 - CI 每个 job 都跑完整的 `pnpm install --frozen-lockfile` —— postinstall 里的 `electron-builder install-app-deps`
   负责为当前平台 + Electron ABI 重新编译 `better-sqlite3`（`npmRebuild: false`，打包阶段不再编译），
   所以跨平台打包时这一步不能跳过。
-- 未签名未公证的 macOS 包在别人机器上会被 Gatekeeper 拦（"已损坏，无法打开"，首次需右键 → 打开）。
-  正式分发请按下面「签名与公证」配好 CI secrets。
-
-## 签名与公证
-
-**一次性的 Apple 侧准备**（需要 Apple Developer Program 会员资格）：
-
-1. 在 `developer.apple.com` → Certificates 建一个 **Developer ID Application** 证书，下载后导入钥匙串；
-   再从钥匙串里把它连同私钥导出成 `.p12`（导出时设一个密码）。
-2. 在 `appleid.apple.com` → Sign-In and Security → App-Specific Passwords 生成一个**App 专用密码**。
-3. 在 `developer.apple.com` → Membership 里抄下 **Team ID**。
-   （也可以改用 App Store Connect API Key：`APPLE_API_KEY` / `APPLE_API_KEY_ID` / `APPLE_API_ISSUER_ID`。）
-
-**填进 GitHub Secrets**（仓库 Settings → Secrets and variables → Actions）：
-
-```bash
-# .p12 转 base64 单行字符串，值贴进 CSC_LINK
-base64 -w0 DeveloperID.p12 | gh secret set CSC_LINK
-gh secret set CSC_KEY_PASSWORD      # 导出 .p12 时设的密码
-gh secret set APPLE_ID              # Apple 开发者账号邮箱
-gh secret set APPLE_APP_SPECIFIC_PASSWORD
-gh secret set APPLE_TEAM_ID
-# Windows 可选：代码签名证书（.pfx/.p12 的 base64）
-gh secret set WIN_CSC_LINK
-gh secret set WIN_CSC_KEY_PASSWORD
-```
-
-**仓库侧已经就位的部分**（无需再改）：
-
-- `electron-builder.yml`：`hardenedRuntime: true` + `build/entitlements.mac.plist`（公证的硬性前置条件），
-  `gatekeeperAssess: false`，`notarize: false`（本地打包不会因为缺凭据直接失败）。
-- `@electron/notarize` 已加进 devDependencies —— electron-builder 不自带它，公证时从项目里 `require`，
-  缺了会直接报 module not found。
-- `release.yml` 的 mac job：配齐 `CSC_LINK` + `APPLE_ID` + `APPLE_TEAM_ID` 时自动追加
-  `--config.mac.notarize=true`；没配就只出产物并打一条 warning。
-
-本地想验证签名结果（需已装证书的本机）：
-
-```bash
-pnpm build:mac
-codesign -dv --verbose=4 dist/mac/蓝星影视.app   # 看签名链
-spctl -a -t exec -vv dist/mac/蓝星影视.app        # 看 Gatekeeper 评估
-```
-
-公证是异步的：CI 里 electron-builder 会阻塞等待 Apple 返回结果并自动 staple
-（断网机器首次打开时也能通过），通常 1–5 分钟。
+- **产物不做代码签名 / 公证**（没有 Apple Developer 证书，也不配 `CSC_*` / `APPLE_*` 凭据）：
+  CI 的两个 job 都设了 `CSC_IDENTITY_AUTO_DISCOVERY=false`，electron-builder 直接跳过签名；
+  `electron-builder.yml` 里 `notarize: false`、`gatekeeperAssess: false`。
+- 由此带来的安装提示：macOS 用户首次打开会被 Gatekeeper 拦（"已损坏，无法打开"），**右键 → 打开** 即可；
+  Windows 会提示"未知发布者"，允许即安装。
+- 将来要签名公证再另开：配 `CSC_LINK` / `CSC_KEY_PASSWORD` / `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` /
+  `APPLE_TEAM_ID`，去掉 `CSC_IDENTITY_AUTO_DISCOVERY`，把 `notarize` 打开并装回 `@electron/notarize`。
 
 ## 约定
 

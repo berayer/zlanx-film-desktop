@@ -25,9 +25,6 @@ extraResources:
     to: migrations
 win:
   executableName: zlanx-film-desktop
-  # Windows 签名（可选，消除 SmartScreen 的"未知发布者"）：
-  # 同样复用 CSC_LINK（base64 后的 .pfx）+ CSC_KEY_PASSWORD，electron-builder 会自动签 exe / nsis。
-  # 走 Azure Code Signing 时改用 WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD。
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -36,24 +33,16 @@ nsis:
 mac:
   # 由 build/icon.png（1024×1024）在打包时转成 icns，不需要手工准备 .icns
   icon: build/icon.png
-  # hardenedRuntime 默认就是 true，显式写出来：公证（notarize）要求它必须开启
-  hardenedRuntime: true
-  # 主进程与子进程（渲染 / 工具进程）用同一份 entitlements
-  entitlements: build/entitlements.mac.plist
-  entitlementsInherit: build/entitlements.mac.plist
-  # 打包机本地的 Gatekeeper 预检：慢，且 CI 上必失败（未公证），判定交给 Apple 服务端
+  # 未签名，所以不配 hardenedRuntime / entitlements / 公证（签名相关的配置留空）
+  # 打包机本地的 Gatekeeper 预检：产物未签名，这一步必然失败，直接关掉
   gatekeeperAssess: false
   # arch 不在这里写死：CI 用 --x64 / --arm64 分别出两个架构（见 .github/workflows/release.yml）
   target:
     - dmg
     # zip 是 macOS 上自动更新（electron-updater）唯一支持的格式，dmg 只给人手装
     - zip
-  # 公证默认关闭：本地打包没有 Apple 凭据会直接失败。
-  # CI 里配齐 APPLE_* / CSC_* secrets 后，由 release.yml 追加 --config.mac.notarize=true 打开。
+  # 不做公证（没有 Apple Developer 证书 / 凭据）
   notarize: false
-  # 签名身份留空 → electron-builder 自动挑钥匙串里的 "Developer ID Application"。
-  # CI 上通过 CSC_LINK(base64 的 .p12) + CSC_KEY_PASSWORD 临时导入，不需要钥匙串。
-  # identity: "Developer ID Application: xxx (TEAMID)"
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
