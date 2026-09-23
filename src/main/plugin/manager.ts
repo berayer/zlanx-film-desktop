@@ -12,6 +12,7 @@ import {
 } from "./config"
 import { Emitter } from "./emitter"
 import { PluginError, toPluginError } from "./errors"
+import { ProxyTimeoutError, proxyFetch } from "@main/lib/proxy"
 import { exists, writeAtomic } from "./fs"
 import { createPluginLogger, noopLogger } from "./logger"
 import { isValidVersion, satisfiesRange } from "./semver"
@@ -483,11 +484,10 @@ export class PluginManager<TApi extends object = PluginApi> {
     }
 
     const timeout = this.#downloadTimeout
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), timeout)
     let code: string
     try {
-      const response = await fetch(parsed, { signal: controller.signal })
+      // 走 proxyFetch：与主进程其它请求共用会话代理配置（跟随系统代理）
+      const response = await proxyFetch(String(parsed), { timeout })
       if (!response.ok) {
         throw new PluginError("INSTALL_FAILED", `下载失败：HTTP ${response.status} ${String(parsed)}`)
       }
@@ -500,12 +500,10 @@ export class PluginManager<TApi extends object = PluginApi> {
       if (error instanceof PluginError) {
         throw error
       }
-      if (controller.signal.aborted) {
+      if (error instanceof ProxyTimeoutError) {
         throw new PluginError("INSTALL_FAILED", `下载插件超过 ${timeout}ms 未完成：${String(parsed)}`)
       }
       throw new PluginError("INSTALL_FAILED", `下载插件失败：${error instanceof Error ? error.message : String(error)}`)
-    } finally {
-      clearTimeout(timer)
     }
     return this.#installCode(code, options, String(parsed))
   }
@@ -1269,37 +1267,25 @@ export class PluginManager<TApi extends object = PluginApi> {
   #createHttp(pluginId: string): PluginHttp {
     const request = async (url: string, init?: PluginHttpInit): Promise<Response> => {
       const timeout = init?.timeout ?? this.#httpTimeout
-      const externalSignal = init?.signal
-      const controller = new AbortController()
-      let timedOut = false
-      const timer = setTimeout(() => {
-        timedOut = true
-        controller.abort()
-      }, timeout)
-      const onExternalAbort = () => controller.abort(externalSignal?.reason)
-      externalSignal?.addEventListener("abort", onExternalAbort, {
-        once: true,
-      })
       try {
-        return await fetch(url, {
+        // 走 proxyFetch（Chromium 网络栈），自动应用系统代理
+        return await proxyFetch(url, {
           method: init?.method,
           headers: init?.headers,
           // lib.dom 的 BufferSource 要求非共享的 ArrayBufferView<ArrayBuffer>，
           // 而 Uint8Array 默认参数化为 ArrayBufferLike，此处需要收窄断言
           body: init?.body as BodyInit | undefined,
-          signal: controller.signal,
+          signal: init?.signal,
+          timeout,
         })
       } catch (error) {
-        if (timedOut) {
+        if (error instanceof ProxyTimeoutError) {
           throw new PluginError("HOOK_TIMEOUT", `请求超过 ${timeout}ms 未完成`, {
             pluginId,
             cause: error,
           })
         }
         throw error
-      } finally {
-        clearTimeout(timer)
-        externalSignal?.removeEventListener("abort", onExternalAbort)
       }
     }
     return {

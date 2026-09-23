@@ -7,6 +7,7 @@ import { initPluginManager, registerPluginIpc } from "@main/plugin/index"
 import { registerApi } from "@main/api"
 import { runMigrations } from "@main/lib/migrate"
 import { prisma } from "@main/lib/db"
+import { configureSystemProxy } from "@main/lib/proxy"
 
 /** 应用级日志器（作用域 `app`，底层 electron-log） */
 const log = hostLog.scope("app")
@@ -141,6 +142,15 @@ if (!primaryInstance && !is.dev) {
       // cSpell: words registerFramelessWindowIpc
       optimizer.registerFramelessWindowIpc()
     })
+
+    // 让所有网络请求跟随系统代理：渲染进程（图片 / 视频 / 播放器）走的是会话代理，
+    // 主进程（插件 ctx.http、插件下载安装）走 session.fetch，两者共用这一份配置。
+    // 必须在插件初始化之前完成，否则插件第一次请求会用它之前拿到的代理设置。
+    try {
+      await configureSystemProxy()
+    } catch (error: unknown) {
+      log.error(`设置系统代理失败：${error instanceof Error ? error.message : String(error)}`)
+    }
 
     // 先把库结构补齐到最新：执行 prisma/migrations 里还没跑过的 SQL。
     // 放在注册 IPC / 开窗之前，保证任何数据库访问拿到的都是最新 schema。

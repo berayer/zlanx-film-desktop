@@ -11,17 +11,18 @@
 - **播放行为**：进入页面不自动播放，切换线路不会打断正在播放的内容，只有点击集数才会解析地址并起播。
 - **收藏 / 历史**：影片收藏与取消收藏；观看历史记录每集的播放进度，已看集数高亮标记，可一键「回到 mm:ss」续播。
 - **导航**：顶栏窗口控制（最小化 / 最大化 / 关闭）+ 页面后退按钮（支持 `Alt + ←`）。
+- **网络**：所有网络请求自动跟随系统代理（渲染进程的图片 / 视频，主进程的插件请求与插件下载）。
 
 ## 技术栈
 
-| 层面 | 选型 |
-| --- | --- |
-| 桌面壳 | Electron 39 + electron-vite 5（main / preload / renderer 三端构建）+ electron-builder |
+| 层面   | 选型                                                                                         |
+| ------ | -------------------------------------------------------------------------------------------- |
+| 桌面壳 | Electron 39 + electron-vite 5（main / preload / renderer 三端构建）+ electron-builder        |
 | 渲染层 | React 19、TanStack Router（文件路由）、Tailwind CSS v4、shadcn/ui（底层为 `@base-ui/react`） |
-| 播放器 | react-player 3 + media-chrome 4 |
-| 数据 | Prisma 7 + SQLite（better-sqlite3 adapter），数据库文件在 `userData/data/dev.db` |
-| 插件 | 宿主 `PluginManager<SourceApi>`，沙箱内 `require` 白名单 |
-| 工程 | TypeScript 5.9（strict）、oxlint、oxfmt、electron-log |
+| 播放器 | react-player 3 + media-chrome 4                                                              |
+| 数据   | Prisma 7 + SQLite（better-sqlite3 adapter），数据库文件在 `userData/data/dev.db`             |
+| 插件   | 宿主 `PluginManager<SourceApi>`，沙箱内 `require` 白名单                                     |
+| 工程   | TypeScript 5.9（strict）、oxlint、oxfmt、electron-log                                        |
 
 ## 快速开始
 
@@ -106,6 +107,18 @@ Prisma + SQLite，schema 见 `prisma/schema.prisma`（`.env` 里的 `DATABASE_UR
 pnpm exec prisma migrate dev --name <变更名>   # 生成并应用迁移
 pnpm exec prisma generate                      # 重新生成客户端类型
 ```
+
+## 网络与代理
+
+应用启动时把会话（session）显式设为「跟随系统代理」，实现见 `src/main/lib/proxy.ts`：
+
+- **渲染进程**：海报图片、播放器（含 m3u8 分片）都走 Chromium 网络栈，自动使用系统代理，无需额外配置。
+- **主进程**：插件的 `ctx.http.*` 与「从 URL 安装插件」统一走 `proxyFetch()` → `session.fetch`（同样是 Chromium 网络栈）。
+  这里刻意不用 Node 的全局 `fetch`：undici 不读系统代理，会出现「浏览器能开、应用里一直超时」。
+- Windows 读系统 / IE 代理设置（含 PAC 与「自动检测设置」），macOS 读网络偏好设置，Linux 读桌面环境设置与
+  `http_proxy` / `https_proxy` 环境变量。
+- 启动日志会打印一行 `已启用系统代理（示例解析结果：PROXY 127.0.0.1:7890 / DIRECT）`，排查网络问题时看它即可。
+- 需要账号密码的企业代理目前只打印一条 warn 日志（应用不提供凭据输入），这类代理下的请求会被取消。
 
 ## 约定
 
