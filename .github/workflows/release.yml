@@ -112,7 +112,8 @@ jobs:
 
   release:
     name: Publish GitHub Release
-    if: startsWith(github.ref, "refs/tags/v")
+    # GitHub Actions 表达式的字符串字面量只能用单引号，双引号会被解析成 Unexpected symbol
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: [macos, windows]
     runs-on: ubuntu-latest
     permissions:
