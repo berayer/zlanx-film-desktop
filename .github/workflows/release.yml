@@ -41,7 +41,8 @@ jobs:
       # （electron-builder.yml 里 npmRebuild: false，打包阶段不会再编译一次）
       - run: pnpm install --frozen-lockfile
 
-      # 含 typecheck（node/web/plugin 三份）+ prisma generate + electron-vite build
+      # 含 typecheck（node / web 两份）+ prisma generate + electron-vite build。
+      # 注意：插件源码那份（typecheck:plugin）不在这里跑 —— plugin-src/ 是本地私有目录，未入库
       - run: pnpm build
 
       # --publish never：electron-builder.yml 里的 publish 指向占位地址，
