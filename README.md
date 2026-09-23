@@ -120,25 +120,6 @@ pnpm exec prisma generate                      # 重新生成客户端类型
 - 启动日志会打印一行 `已启用系统代理（示例解析结果：PROXY 127.0.0.1:7890 / DIRECT）`，排查网络问题时看它即可。
 - 需要账号密码的企业代理目前只打印一条 warn 日志（应用不提供凭据输入），这类代理下的请求会被取消。
 
-## 打包与发布
-
-- **macOS 产物只能在 macOS 上构建**：`codesign` / `hdiutil` / dmg 都是 macOS 独有工具，
-  electron-builder 在非 macOS 上跑 `--mac` 会直接报错，没有跨平台绕法。
-  Windows 可在 Linux / macOS 上打（需 wine），Linux 产物需 docker，AppImage 只能在 Linux 上打。
-- 因此仓库带了 [`.github/workflows/release.yml`](./.github/workflows/release.yml)：推 `v*` tag 触发，
-  `macos-13` 出 x64、`macos-14` 出 arm64、`windows-latest` 出 nsis 安装包，最后自动创建 GitHub Release 并附上产物；
-  也可以手动 Run workflow 只出产物（不建 Release）。
-- CI 每个 job 都跑完整的 `pnpm install --frozen-lockfile` —— postinstall 里的 `electron-builder install-app-deps`
-  负责为当前平台 + Electron ABI 重新编译 `better-sqlite3`（`npmRebuild: false`，打包阶段不再编译），
-  所以跨平台打包时这一步不能跳过。
-- **产物不做代码签名 / 公证**（没有 Apple Developer 证书，也不配 `CSC_*` / `APPLE_*` 凭据）：
-  CI 的两个 job 都设了 `CSC_IDENTITY_AUTO_DISCOVERY=false`，electron-builder 直接跳过签名；
-  `electron-builder.yml` 里 `notarize: false`、`gatekeeperAssess: false`。
-- 由此带来的安装提示：macOS 用户首次打开会被 Gatekeeper 拦（"已损坏，无法打开"），**右键 → 打开** 即可；
-  Windows 会提示"未知发布者"，允许即安装。
-- 将来要签名公证再另开：配 `CSC_LINK` / `CSC_KEY_PASSWORD` / `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` /
-  `APPLE_TEAM_ID`，去掉 `CSC_IDENTITY_AUTO_DISCOVERY`，把 `notarize` 打开并装回 `@electron/notarize`。
-
 ## 约定
 
 - 日志统一走 electron-log（主进程 `src/main/logger.ts` 的 `hostLog`，渲染端 `src/renderer/src/lib/logger.ts` 的 `rendererLog`），不使用 `console.*`。

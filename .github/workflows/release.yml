@@ -1,6 +1,6 @@
 name: Release
 
-# 打 tag（v1.0.0 这种）自动构建全平台产物并创建 GitHub Release；
+# 打 tag（v1.0.0 这种）自动构建 macOS(arm64) + Windows(x64) 产物并创建 GitHub Release；
 # 也可以手动在 Actions 页面点 Run workflow 只出产物（不会创建 Release）。
 on:
   push:
@@ -13,17 +13,10 @@ permissions:
 
 jobs:
   macos:
-    name: macOS (${{ matrix.arch }})
-    # macOS 产物只能在 macOS 上构建（codesign / hdiutil / dmg 都是 macOS 独有工具）
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-13 # Intel
-            arch: x64
-          - os: macos-14 # Apple Silicon
-            arch: arm64
+    # macOS 产物只能在 macOS 上构建（hdiutil / dmg 都是 macOS 独有工具）。
+    # 只出 arm64：不再维护 Intel 版本（如需 x64，把 os 换成 macos-13、--arm64 换成 --x64）
+    name: macOS (arm64)
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
 
@@ -51,13 +44,13 @@ jobs:
       # 不做代码签名 / 公证：CSC_IDENTITY_AUTO_DISCOVERY=false 让 electron-builder 直接跳过签名，
       # 不去钥匙串里找证书（否则它会拿空凭据去跑 codesign 然后失败）。
       - name: Package (dmg + zip)
-        run: pnpm exec electron-builder --mac --${{ matrix.arch }} --publish never
+        run: pnpm exec electron-builder --mac --arm64 --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - uses: actions/upload-artifact@v4
         with:
-          name: macos-${{ matrix.arch }}
+          name: macos-arm64
           path: |
             dist/*.dmg
             dist/*.zip

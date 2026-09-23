@@ -26,7 +26,7 @@ extraResources:
 win:
   executableName: zlanx-film-desktop
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
+  artifactName: ${name}-${version}-win-${arch}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
@@ -36,15 +36,15 @@ mac:
   # 未签名，所以不配 hardenedRuntime / entitlements / 公证（签名相关的配置留空）
   # 打包机本地的 Gatekeeper 预检：产物未签名，这一步必然失败，直接关掉
   gatekeeperAssess: false
-  # arch 不在这里写死：CI 用 --x64 / --arm64 分别出两个架构（见 .github/workflows/release.yml）
+  # 这里只出 arm64（CI 固定 --arm64，见 .github/workflows/release.yml）
   target:
     - dmg
     # zip 是 macOS 上自动更新（electron-updater）唯一支持的格式，dmg 只给人手装
     - zip
   # 不做公证（没有 Apple Developer 证书 / 凭据）
   notarize: false
-dmg:
-  artifactName: ${name}-${version}.${ext}
+  # 产物统一带平台 + 架构：dmg 与 zip 都用这一份（不单设 dmg.artifactName）
+  artifactName: ${name}-${version}-mac-${arch}.${ext}
 linux:
   target:
     - AppImage
@@ -52,8 +52,7 @@ linux:
     - deb
   maintainer: electronjs.org
   category: Utility
-appImage:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ${name}-${version}-linux-${arch}.${ext}
 npmRebuild: false
 publish:
   provider: generic
