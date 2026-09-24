@@ -27,7 +27,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          # 缓存 pnpm store（含依赖 tar 包），key 由 lockfile 内容生成
           cache: pnpm
+
+      # electron-builder 的二进制缓存：Electron zip、icons-bundle、dmg 工具。
+      # 这是整个 job 里最耗时的一步下载（几百 MB），不缓存每次重跑都要重新拉一遍。
+      # 路径按 OS 直接写死，不用前一步 `echo "...=$HOME/..." >> $GITHUB_ENV` 再引用 env 变量：
+      # 那种写法运行时能跑，但 env 变量在运行前不存在，静态校验会报 Context access might be invalid。
+      # path 支持 ~ 展开：macOS = ~/Library/Caches/electron-builder、
+      # Linux = ~/.cache/electron-builder、Windows = ~/AppData/Local/electron-builder/cache。
+      - uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/electron-builder
+          # key 含 pnpm-lock.yaml（决定 Electron 版本）+ electron-builder.yml；
+          # restore-keys 让只改打包配置、Electron 没变时仍能命中同 OS 的最新一份
+          key: ${{ runner.os }}-electron-builder-${{ hashFiles('pnpm-lock.yaml', 'electron-builder.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-builder-
 
       # 不能用 --ignore-scripts：postinstall 里的 `electron-builder install-app-deps`
       # 负责把 better-sqlite3 按当前平台 + 当前 Electron ABI 重新编译
@@ -68,7 +84,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          # 缓存 pnpm store（含依赖 tar 包），key 由 lockfile 内容生成
           cache: pnpm
+
+      # 同 macos job：缓存 Electron zip + nsis 工具
+      - uses: actions/cache@v4
+        with:
+          path: ~/AppData/Local/electron-builder/cache
+          key: ${{ runner.os }}-electron-builder-${{ hashFiles('pnpm-lock.yaml', 'electron-builder.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-builder-
 
       - run: pnpm install --frozen-lockfile
 
