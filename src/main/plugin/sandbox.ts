@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer"
 import { createRequire } from "node:module"
 import path from "node:path"
 import * as vm from "node:vm"
@@ -33,6 +34,9 @@ export interface SandboxHandle {
  * 以 CommonJS 形式在 `node:vm` 沙箱中执行插件入口代码。
  *
  * - 只注入白名单 `require`、`console` 与 `fetch`（`fetch` 由宿主按超时策略包装）；
+ * - **`node:vm` 的新上下文不继承 Node 全局**，所有插件能用的全局都要在这里逐个列出
+ *   （目前含 `Buffer`、`URL` / `URLSearchParams`、`TextEncoder` / `TextDecoder`、
+ *   `AbortController` / `AbortSignal`、定时器、`queueMicrotask`）；
  * - 顶层同步执行受 `timeout` 约束，超时抛 `LOAD_FAILED`；
  * - 默认屏蔽 `eval` / `new Function`（`allowCodeGeneration` 可放开）。
  */
@@ -51,6 +55,9 @@ export function runPluginModule(options: SandboxOptions): SandboxHandle {
     TextDecoder,
     AbortController,
     AbortSignal,
+    // Node 全局，必须显式注入：vm 上下文里默认是 undefined，
+    // 插件一调用 Buffer.from(...) 就 ReferenceError
+    Buffer,
   }
   sandbox.console = options.logger
   sandbox.fetch = (input: string | URL, init?: RequestInit) =>

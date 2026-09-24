@@ -7,6 +7,7 @@ import { initPluginManager, registerPluginIpc } from "@main/plugin/index"
 import { registerApi } from "@main/api"
 import { runMigrations } from "@main/lib/migrate"
 import { prisma } from "@main/lib/db"
+import { configureMediaCors } from "@main/lib/media-cors"
 import { configureSystemProxy } from "@main/lib/proxy"
 
 /** 应用级日志器（作用域 `app`，底层 electron-log） */
@@ -150,6 +151,14 @@ if (!primaryInstance && !is.dev) {
       await configureSystemProxy()
     } catch (error: unknown) {
       log.error(`设置系统代理失败：${error instanceof Error ? error.message : String(error)}`)
+    }
+
+    // 播放器要跨源取流：hls.js 用 XHR 拉 m3u8 / 分片，影视源站点通常不给 CORS 头，
+    // 这里在会话层给媒体响应补上（不动整体 webSecurity）。
+    try {
+      configureMediaCors()
+    } catch (error: unknown) {
+      log.error(`开启播放器跨源放行失败：${error instanceof Error ? error.message : String(error)}`)
     }
 
     // 先把库结构补齐到最新：执行 prisma/migrations 里还没跑过的 SQL。

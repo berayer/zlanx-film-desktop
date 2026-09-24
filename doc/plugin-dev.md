@@ -117,13 +117,17 @@ interface PluginContext {
   | `he` | HTML 实体编解码 |
   | `es-toolkit` | 工具函数 |
   | `node:crypto`（或 `crypto`） | Node 内置加解密 |
+  | `node:buffer`（或 `buffer`） | Node 内置缓冲区（`Buffer` 等） |
 
   宿主已把命名导出与 `default` 归一化，所以 `require("x")` 与 `require("x").default` 都指向同一份实现；
   需要精确类型时自行断言：`const cheerio = require("cheerio") as typeof import("cheerio")`。
 - 顶层不要写副作用：安装校验与每次加载都会执行一遍顶层代码。
 - 默认禁用 `eval` 与 `new Function`。
-- 其它可用全局：`setTimeout` / `setInterval` / `queueMicrotask` / `URL` / `URLSearchParams` /
-  `TextEncoder` / `TextDecoder` / `AbortController` / `AbortSignal` / `__filename` / `__dirname`。
+- 可用全局（**`node:vm` 上下文不继承 Node 全局，用到哪个宿主就得注入哪个**，没有列出的都是 `undefined`）：
+  `Buffer` / `setTimeout` / `setInterval` / `clearTimeout` / `clearInterval` / `queueMicrotask` /
+  `URL` / `URLSearchParams` / `TextEncoder` / `TextDecoder` / `AbortController` / `AbortSignal` /
+  `__filename` / `__dirname`。
+  需要别的全局（`atob` / `btoa` / `Blob` 等）请提给宿主，不要假设它们存在。
 
 ## 七、错误码
 

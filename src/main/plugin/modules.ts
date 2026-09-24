@@ -15,6 +15,7 @@
  * Node 内置模块（`node:crypto` 等）只需加进下面的表，后面两步都不需要。
  */
 import * as crypto from "node:crypto"
+import * as buffer from "node:buffer"
 import * as cheerio from "cheerio"
 import * as esToolkit from "es-toolkit"
 import * as he from "he"
@@ -66,6 +67,8 @@ function toPluginModule<T extends object>(namespace: T): T {
  * 内置模块打进包体。这里同时挂了不带前缀的 `crypto`，两种写法都能 require 到。
  */
 const nodeCrypto = toPluginModule(crypto)
+// Buffer 除了作为沙箱全局注入（见 sandbox.ts），也允许显式 require
+const nodeBuffer = toPluginModule(buffer)
 
 export const HOST_MODULES: Record<string, unknown> = {
   cheerio: toPluginModule(cheerio),
@@ -74,6 +77,8 @@ export const HOST_MODULES: Record<string, unknown> = {
   // 同一个对象挂两个名字，`require("node:crypto")` 与 `require("crypto")` 都命中同一份
   "node:crypto": nodeCrypto,
   crypto: nodeCrypto,
+  "node:buffer": nodeBuffer,
+  buffer: nodeBuffer,
 }
 
 /** 允许插件 require 的模块名，默认交给 `initPluginManager` 作为 allowRequire */
