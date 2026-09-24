@@ -100,14 +100,19 @@ jobs:
           path: dist-release
           merge-multiple: true
 
-      # 手动重跑时 Release 可能已存在，这时改成往已有 Release 覆盖上传
+      # 这个 job 只做产物汇总，没有 checkout —— 而 gh 默认靠本地 git 仓库推断 owner/repo，
+      # 在 Runner 的工作目录里跑就会报 `failed to run git: fatal: not a git repository`。
+      # 两条 gh 命令都显式带上 -R，就不必为了它 clone 一遍仓库。
       - name: Create or update release
         run: |
           set -euo pipefail
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist-release/* --clobber
+          REPO="${{ github.repository }}"
+          TAG="$GITHUB_REF_NAME"
+          if gh release view "$TAG" -R "$REPO" >/dev/null 2>&1; then
+            # 手动重跑时 Release 可能已存在，改成往已有 Release 覆盖同名资产
+            gh release upload "$TAG" dist-release/* --clobber -R "$REPO"
           else
-            gh release create "$GITHUB_REF_NAME" --generate-notes dist-release/*
+            gh release create "$TAG" --generate-notes dist-release/* -R "$REPO"
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
