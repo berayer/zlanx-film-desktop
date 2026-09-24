@@ -1,6 +1,6 @@
 {
   "name": "zlanx-film-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An Electron application with React and TypeScript",
   "homepage": "https://electron-vite.org",
   "author": "example.com",
